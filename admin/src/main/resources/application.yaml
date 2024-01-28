@@ -12,3 +12,17 @@ spring:
       idle-timeout: 300000
       maximum-pool-size: 5
       minimum-idle: 5
+  data:
+    redis:
+      host: 192.168.50.132
+      port: 6379
+      username: root
+      password: panzifeng0922
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 10
+          min-idle: 1
+          max-wait: 100ms
+          time-between-eviction-runs: 10s
+

@@ -15,4 +15,10 @@ public interface UserService extends IService<UserDO> {
     UserRespDTO getUserByUserName(String username);
 
     UserActualRespDTO getUserActualInfoByUserName(String username);
+
+    /**
+     *
+     * 查看是否存在相应的username
+     */
+    Boolean hasUserName(String username);
 }
