@@ -1,13 +1,15 @@
 package org.personalproj.shortlink.admin.dto.resp;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
+import org.personalproj.shortlink.admin.common.serialize.PhoneDesensitizationSerializer;
 
 /**
  *@BelongsProject: shortlink
  *@BelongsPackage: org.personalproj.shortlink.admin.dto.resp
  *@Author: PzF
  *@CreateTime: 2024-01-27  14:39
- *@Description: 用户返回响应实体
+ *@Description: 用户信息脱敏返回实体
  *@Version: 1.0
  */
 @Data
@@ -26,6 +28,7 @@ public class UserRespDTO {
     /**
      * 用户手机号
      */
+    @JsonSerialize(using = PhoneDesensitizationSerializer.class)
     private String phone;
 
     /**

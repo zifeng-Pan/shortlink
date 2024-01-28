@@ -2,6 +2,7 @@ package org.personalproj.shortlink.admin.service;
 
 import org.personalproj.shortlink.admin.dao.entity.UserDO;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.personalproj.shortlink.admin.dto.resp.UserActualRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserRespDTO;
 
 /**
@@ -12,4 +13,6 @@ import org.personalproj.shortlink.admin.dto.resp.UserRespDTO;
 public interface UserService extends IService<UserDO> {
 
     UserRespDTO getUserByUserName(String username);
+
+    UserActualRespDTO getUserActualInfoByUserName(String username);
 }

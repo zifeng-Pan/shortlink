@@ -5,6 +5,7 @@ import org.personalproj.shortlink.admin.common.convention.exception.ClientExcept
 import org.personalproj.shortlink.admin.common.convention.result.Result;
 import org.personalproj.shortlink.admin.common.convention.result.Results;
 import org.personalproj.shortlink.admin.common.enums.UserErrorCode;
+import org.personalproj.shortlink.admin.dto.resp.UserActualRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserRespDTO;
 import org.personalproj.shortlink.admin.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +34,16 @@ public class UserController {
     @GetMapping("{username}")
     public Result<UserRespDTO> getUserByUsername(@PathVariable("username") String username){
         UserRespDTO result = userService.getUserByUserName(username);
+        if (result == null){
+            throw new ClientException(UserErrorCode.USER_NULL);
+        }else {
+            return Results.success(result);
+        }
+    }
+
+    @GetMapping("/actual/{username}")
+    public Result<UserActualRespDTO> getUserActualInfoByUsername(@PathVariable("username") String username){
+        UserActualRespDTO result = userService.getUserActualInfoByUserName(username);
         if (result == null){
             throw new ClientException(UserErrorCode.USER_NULL);
         }else {
