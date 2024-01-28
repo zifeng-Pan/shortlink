@@ -8,7 +8,7 @@ import org.personalproj.shortlink.admin.common.convention.errorcode.IStatusCode;
  * @BelongsPackage: org.personalproj.shortlink.admin.common.convention.exception
  * @Author: PzF
  * @CreateTime: 2024-01-27  18:44
- * @Description: TODO
+ * @Description: 远程调用异常
  * @Version: 1.0
  */
 public class RemoteException extends AbstractException{

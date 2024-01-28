@@ -10,7 +10,7 @@ import java.util.Optional;
  * @BelongsPackage: org.personalproj.shortlink.admin.common.convention.exception
  * @Author: PzF
  * @CreateTime: 2024-01-27  18:44
- * @Description: TODO
+ * @Description: 服务端异常
  * @Version: 1.0
  */
 public class ServerException extends AbstractException{
