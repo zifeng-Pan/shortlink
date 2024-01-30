@@ -12,7 +12,7 @@ import java.util.Date;
  * @BelongsPackage: org.personalproj.shortlink.admin.config
  * @Author: PzF
  * @CreateTime: 2024-01-29  15:56
- * @Description: TODO
+ * @Description: 持久层对象属性填充器
  * @Version: 1.0
  */
 @Slf4j
