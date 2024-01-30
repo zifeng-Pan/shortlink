@@ -2,6 +2,7 @@ package org.personalproj.shortlink.admin.service;
 
 import org.personalproj.shortlink.admin.dao.entity.UserDO;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.personalproj.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserActualRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserRespDTO;
 
@@ -17,8 +18,15 @@ public interface UserService extends IService<UserDO> {
     UserActualRespDTO getUserActualInfoByUserName(String username);
 
     /**
-     *
      * 查看是否存在相应的username
      */
     Boolean hasUserName(String username);
+
+    /**
+     *
+     * 用户注册
+     */
+    void register(UserRegisterReqDTO userRegisterReqDTO);
+
+
 }

@@ -14,7 +14,11 @@ public enum UserErrorCode implements IStatusCode {
     // ========== 二级宏观错误码 用户相关错误 ==========
     USER_NULL("B000200","用户记录不存在"),
 
-    USER_EXIST("B000201","用户记录存在");
+    USER_NAME_EXIST("B000201","用户名存在"),
+
+    USER_EXIST("B000202","用户存在"),
+
+    USER_REGISTER_ERROR("B000203", "新增用户记录失败");
 
 
     private final String code;

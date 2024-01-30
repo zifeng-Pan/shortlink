@@ -3,8 +3,11 @@ package org.personalproj.shortlink.admin.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.personalproj.shortlink.admin.common.convention.exception.ClientException;
+import org.personalproj.shortlink.admin.common.enums.UserErrorCode;
 import org.personalproj.shortlink.admin.dao.entity.UserDO;
 import org.personalproj.shortlink.admin.dao.mapper.UserMapper;
+import org.personalproj.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserActualRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserRespDTO;
 import org.personalproj.shortlink.admin.service.UserService;
@@ -26,17 +29,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
     @Override
     public UserRespDTO getUserByUserName(String username) {
         UserDO queryResult = query().eq("username", username).one();
+        if (queryResult == null) {
+            throw new ClientException(UserErrorCode.USER_NULL);
+        }
         return BeanUtil.copyProperties(queryResult, UserRespDTO.class);
     }
 
     @Override
     public UserActualRespDTO getUserActualInfoByUserName(String username){
-        return BeanUtil.copyProperties(query().eq("username",username).one(), UserActualRespDTO.class);
+        UserDO queryResult = query().eq("username", username).one();
+        if(queryResult == null){
+            throw new ClientException(UserErrorCode.USER_NULL);
+        }
+        return BeanUtil.copyProperties(queryResult, UserActualRespDTO.class);
     }
 
     @Override
     public Boolean hasUserName(String username) {
         return userRegisterCachePenetrationBloomFilter.contains(username);
+    }
+
+    @Override
+    public void register(UserRegisterReqDTO userRegisterReqDTO) {
+        if(hasUserName(userRegisterReqDTO.getUsername())){
+           throw new ClientException(UserErrorCode.USER_NAME_EXIST);
+        }
+        UserDO userDO = BeanUtil.copyProperties(userRegisterReqDTO, UserDO.class);
+        boolean success = save(userDO);
+        if(!success){
+            throw new ClientException(UserErrorCode.USER_REGISTER_ERROR);
+        }
+        userRegisterCachePenetrationBloomFilter.add(userDO.getUsername());
+
     }
 }
 
