@@ -3,6 +3,7 @@ package org.personalproj.shortlink.admin.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.personalproj.shortlink.admin.common.constnat.RedisCacheConstant;
 import org.personalproj.shortlink.admin.common.convention.exception.ClientException;
 import org.personalproj.shortlink.admin.common.enums.UserErrorCode;
 import org.personalproj.shortlink.admin.dao.entity.UserDO;
@@ -12,6 +13,8 @@ import org.personalproj.shortlink.admin.dto.resp.UserActualRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserRespDTO;
 import org.personalproj.shortlink.admin.service.UserService;
 import org.redisson.api.RBloomFilter;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
 /**
@@ -25,6 +28,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
     implements UserService {
 
     private final RBloomFilter<String> userRegisterCachePenetrationBloomFilter;
+
+    private final RedissonClient redissonClient;
 
     @Override
     public UserRespDTO getUserByUserName(String username) {
@@ -55,11 +60,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
            throw new ClientException(UserErrorCode.USER_NAME_EXIST);
         }
         UserDO userDO = BeanUtil.copyProperties(userRegisterReqDTO, UserDO.class);
-        boolean success = save(userDO);
-        if(!success){
-            throw new ClientException(UserErrorCode.USER_REGISTER_ERROR);
+        // 对于大量的恶意相同用户名的注册，每一次注册先拿到对应的锁，没有拿到就不允许相同用户名注册,抛出用户已经存在的异常。
+        // 即对于大量相同用户名注册，防止全部进行数据库操作，用分布式锁进行串行化
+        RLock lock = redissonClient.getLock(RedisCacheConstant.LOCK_USER_REGISTER + userDO.getUsername());
+        try {
+            if(lock.tryLock()){
+                boolean success = save(userDO);
+                if(!success){
+                    throw new ClientException(UserErrorCode.USER_REGISTER_ERROR);
+                }
+                userRegisterCachePenetrationBloomFilter.add(userDO.getUsername());
+            }
+            throw  new ClientException(UserErrorCode.USER_NAME_EXIST);
+        } finally {
+            lock.unlock();
         }
-        userRegisterCachePenetrationBloomFilter.add(userDO.getUsername());
+
 
     }
 }
