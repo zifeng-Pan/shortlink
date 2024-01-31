@@ -49,7 +49,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
 
     @Override
     public UserRespDTO getUserByUserName(String username) {
-        UserDO queryResult = query().eq("username", username).one();
+        UserDO queryResult = query()
+                .eq("username", username)
+                .eq("delFlag",0).one();
         if (queryResult == null) {
             throw new ClientException(UserErrorCode.USER_NULL);
         }
@@ -58,7 +60,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
 
     @Override
     public UserActualRespDTO getUserActualInfoByUserName(String username) {
-        UserDO queryResult = query().eq("username", username).one();
+        UserDO queryResult = query()
+                .eq("username", username)
+                .eq("delFlag",0).one();
         if (queryResult == null) {
             throw new ClientException(UserErrorCode.USER_NULL);
         }
@@ -102,7 +106,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
     @Override
     public UserLoginRespDTO login(UserLoginReqDTO userLoginReqDTO) {
         // step1: 判断用户的用户名密码是否正确(去数据库中比对)，注意这里也需要限流，防止恶意的大批量的用户进行登录
-        UserDO userDO = query().eq("username", userLoginReqDTO.getUsername()).eq("password", userLoginReqDTO.getPassword()).eq("del_flag", 0).one();
+        UserDO userDO = query()
+                .eq("username", userLoginReqDTO.getUsername())
+                .eq("password", userLoginReqDTO.getPassword())
+                .eq("del_flag", 0).one();
         if (userDO == null) {
             throw new ClientException("用户名或者密码错误");
         }
@@ -154,7 +161,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
         }
         // Step2: 从UpdateDTO复制属性到userDo中并进行数据库更新
         UserDO userDO = BeanUtil.copyProperties(userUpdateReqDTO, UserDO.class);
-        boolean success = update(userDO, Wrappers.lambdaUpdate(UserDO.class).eq(UserDO::getUsername, userUpdateReqDTO.getUsername()));
+        boolean success = update(userDO, Wrappers.lambdaUpdate(UserDO.class)
+                .eq(UserDO::getUsername, userUpdateReqDTO.getUsername())
+                        .eq(UserDO::getDelFlag,0));
         // 更新失败则抛出异常，更新成功则需要在布隆过滤器里面加上更新后的userName
         if (!success) {
             throw new ClientException(UserErrorCode.USER_UPDATE_ERROR);

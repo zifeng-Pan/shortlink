@@ -1,12 +1,16 @@
 package org.personalproj.shortlink.admin.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.personalproj.shortlink.admin.common.database.BaseDO;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * @BelongsProject: shortlink
@@ -18,8 +22,11 @@ import java.util.Date;
  */
 @Data
 @TableName("t_group")
-public class GroupDO implements Serializable {
-
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class GroupDO extends BaseDO implements Serializable {
+    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
     @TableId(type = IdType.AUTO)
@@ -47,19 +54,4 @@ public class GroupDO implements Serializable {
      * 分组排序
      */
     private Integer sortOrder;
-
-    /**
-     * 创建时间
-     */
-    private Date createTime;
-
-    /**
-     * 修改时间
-     */
-    private Date updateTime;
-
-    /**
-     * 删除标识 0：未删除 1：已删除
-     */
-    private int delFlag;
 }

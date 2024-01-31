@@ -1,10 +1,16 @@
 package org.personalproj.shortlink.admin.dao.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.personalproj.shortlink.admin.common.database.BaseDO;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * 
@@ -12,7 +18,10 @@ import java.util.Date;
  */
 @TableName(value ="t_user")
 @Data
-public class UserDO implements Serializable {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserDO extends BaseDO implements Serializable {
     /**
      * 用户ID
      */
@@ -54,24 +63,6 @@ public class UserDO implements Serializable {
      * 用户注销时间戳
      */
     private Long deletionTime;
-
-    /**
-     * 用户创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 用户信息更新时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 逻辑删除标志，0：未删除，1：删除
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Integer delFlag;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
