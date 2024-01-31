@@ -1,5 +1,7 @@
 package org.personalproj.shortlink.admin.common.constnat;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @BelongsProject: shortlink
  * @BelongsPackage: org.personalproj.shortlink.admin.common.constnat
@@ -10,6 +12,14 @@ package org.personalproj.shortlink.admin.common.constnat;
  */
 public class RedisCacheConstant {
 
-    public static final String LOCK_USER_REGISTER = "short-link:user_register:";
+    public static final String LOCK_USER_REGISTER = "short-link:user-register:";
+
+    public static final String USER_COUNT_KEY = "short-link:user-count:";
+
+    public static final String USER_LOGIN_KEY = "short-link:user-login:";
+
+    public static final Long USER_LOGIN_TIMEOUT = 30L;
+
+    public static final TimeUnit USER_LOGIN_TIMEUNIT = TimeUnit.MINUTES;
 
 }

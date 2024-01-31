@@ -23,6 +23,12 @@ public class UserActualRespDTO {
      */
     private String username;
 
+    /**
+     *
+     * 用户昵称
+     */
+    private String nickname;
+
 
     /**
      * 用户手机号

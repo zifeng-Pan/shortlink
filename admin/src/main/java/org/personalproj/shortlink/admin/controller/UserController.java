@@ -1,21 +1,25 @@
 package org.personalproj.shortlink.admin.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.admin.common.convention.result.Result;
 import org.personalproj.shortlink.admin.common.convention.result.Results;
+import org.personalproj.shortlink.admin.dto.req.UserLoginReqDTO;
 import org.personalproj.shortlink.admin.dto.req.UserRegisterReqDTO;
+import org.personalproj.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserActualRespDTO;
+import org.personalproj.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserRespDTO;
 import org.personalproj.shortlink.admin.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 /**
- *@BelongsProject: shortlink
- *@BelongsPackage: org.personalproj.shortlink.admin.controller
- *@Author: PzF
- *@CreateTime: 2024-01-27  10:48
- *@Description: 用户管理控制层
- *@Version: 1.0
+ * @BelongsProject: shortlink
+ * @BelongsPackage: org.personalproj.shortlink.admin.controller
+ * @Author: PzF
+ * @CreateTime: 2024-01-27  10:48
+ * @Description: 用户管理控制层
+ * @Version: 1.0
  */
 @RestController
 @RequestMapping("/api/shortlink/v1/user")
@@ -27,8 +31,8 @@ public class UserController {
     /**
      * @description: 根据用户名查询信息
      **/
-    @GetMapping("{username}")
-    public Result<UserRespDTO> getUserByUsername(@PathVariable("username") String username){
+    @GetMapping("/admin/{username}")
+    public Result<UserRespDTO> getUserByUsername(@PathVariable("username") String username) {
         UserRespDTO result = userService.getUserByUserName(username);
         return Results.success(result);
 
@@ -36,30 +40,56 @@ public class UserController {
 
 
     /**
-     *
      * 获取用户真实未脱敏信息
      */
-    @GetMapping("/actual/{username}")
-    public Result<UserActualRespDTO> getUserActualInfoByUsername(@PathVariable("username") String username){
+    @GetMapping("/admin/actual/{username}")
+    public Result<UserActualRespDTO> getUserActualInfoByUsername(@PathVariable("username") String username) {
         UserActualRespDTO result = userService.getUserActualInfoByUserName(username);
         return Results.success(result);
+    }
+
+    @GetMapping("/admin/nickname-available/{nickname}")
+    public Result<Boolean> userNickNameAvailable(@PathVariable("nickname") String nickname){
+        return Results.success(!userService.hasNickName(nickname));
     }
 
 
     /**
      *
-     * 判断用户名是否可用
+     * 用户登录
      */
-    @GetMapping("/has-username/{username}")
-    public Result<Boolean> hasUserName(@PathVariable("username") String username){
-        return Results.success(userService.hasUserName(username));
+    @PostMapping("/admin/login")
+    public Result<UserLoginRespDTO> login(@RequestBody UserLoginReqDTO userLoginReqDTO){
+        UserLoginRespDTO respDTO = userService.login(userLoginReqDTO);
+        return Results.success(respDTO);
+    }
+
+    /**
+     *
+     * 用户登出
+     */
+    @GetMapping("/logout")
+    public Result<Void> logOut(HttpServletRequest request){
+        userService.logOut(request);
+        return Results.success();
     }
 
 
+    /**
+     * 新用户注册
+     */
+    @PostMapping("/admin/register")
+    public Result<String> userRegister(@RequestBody UserRegisterReqDTO userRegisterReqDTO) {
+        return Results.success(userService.register(userRegisterReqDTO));
+    }
 
-    @PostMapping("/register")
-    public Result<Void> userRegister(@RequestBody UserRegisterReqDTO userRegisterReqDTO){
-        userService.register(userRegisterReqDTO);
+
+    /**
+     * 用户信息更新
+     */
+    @PostMapping("/update")
+    public Result<Void> userUpdate(@RequestBody UserUpdateReqDTO userUpdateReqDTO) {
+        userService.update(userUpdateReqDTO);
         return Results.success();
     }
 

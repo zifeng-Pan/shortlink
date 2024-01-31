@@ -5,15 +5,16 @@ import lombok.Data;
 import org.personalproj.shortlink.admin.common.serialize.PhoneDesensitizationSerializer;
 
 /**
- *@BelongsProject: shortlink
- *@BelongsPackage: org.personalproj.shortlink.admin.dto.resp
- *@Author: PzF
- *@CreateTime: 2024-01-27  14:39
- *@Description: 用户信息脱敏返回实体
- *@Version: 1.0
+ * @BelongsProject: shortlink
+ * @BelongsPackage: org.personalproj.shortlink.admin.dto.resp
+ * @Author: PzF
+ * @CreateTime: 2024-01-30  14:50
+ * @Description: 用户登录响应DTO
+ * @Version: 1.0
  */
+
 @Data
-public class UserRespDTO {
+public class UserLoginRespDTO {
     /**
      * 用户ID
      */
@@ -30,7 +31,6 @@ public class UserRespDTO {
      */
     private String nickname;
 
-
     /**
      * 用户手机号
      */
@@ -46,5 +46,11 @@ public class UserRespDTO {
      * 用户邮箱
      */
     private String mail;
+
+    /**
+     *
+     * 用户登录token
+     */
+    private String token;
 
 }

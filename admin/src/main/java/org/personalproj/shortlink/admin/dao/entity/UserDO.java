@@ -30,6 +30,12 @@ public class UserDO implements Serializable {
     private String password;
 
     /**
+     *
+     * 用户昵称
+     */
+    private String nickname;
+
+    /**
      * 用户手机号
      */
     private String phone;

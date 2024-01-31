@@ -15,12 +15,12 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class RBloomFilterConfiguration {
-
     /**
-     * 防止用户注册查询数据库的布隆过滤器
+     *
+     * 用户昵称布隆过滤器
      */
-    @Bean()
-    public RBloomFilter<String> userRegisterCachePenetrationBloomFilter(RedissonClient redissonClient) {
+    @Bean
+    public RBloomFilter<String> userNickNameCachePenetrationBloomFilter(RedissonClient redissonClient) {
         RBloomFilter<String> cachePenetrationBloomFilter = redissonClient.getBloomFilter("userRegisterCachePenetrationBloomFilter");
         cachePenetrationBloomFilter.tryInit(100000000, 0.001);
         return cachePenetrationBloomFilter;
