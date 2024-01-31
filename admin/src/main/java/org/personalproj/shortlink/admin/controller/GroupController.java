@@ -3,7 +3,8 @@ package org.personalproj.shortlink.admin.controller;
 import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.admin.common.convention.result.Result;
 import org.personalproj.shortlink.admin.common.convention.result.Results;
-import org.personalproj.shortlink.admin.dto.req.GroupUpdateDTO;
+import org.personalproj.shortlink.admin.dto.req.GroupSortReqDTO;
+import org.personalproj.shortlink.admin.dto.req.GroupUpdateReqDTO;
 import org.personalproj.shortlink.admin.dto.resp.GroupRespDTO;
 import org.personalproj.shortlink.admin.service.GroupService;
 import org.springframework.web.bind.annotation.*;
@@ -50,10 +51,21 @@ public class GroupController {
      * 更新短链接组
      */
     @PutMapping("/update")
-    public Result<Void> updateGroup(@RequestBody GroupUpdateDTO groupUpdateDTO){
-        groupService.updateGroup(groupUpdateDTO);
+    public Result<Void> updateGroup(@RequestBody GroupUpdateReqDTO groupUpdateReqDTO){
+        groupService.updateGroup(groupUpdateReqDTO);
         return Results.success();
     }
+
+    /**
+     *
+     * 短链接组批量排序
+     */
+    @PostMapping("/sort-batch")
+    public Result<Void> updateGroupSortOrderBatch(@RequestBody List<GroupSortReqDTO> groupSortReqDTOList){
+        groupService.sorOrderUpdate(groupSortReqDTOList);
+        return Results.success();
+    }
+
 
     @GetMapping("/remove/{gid}")
     public Result<Void> removeGroup(@PathVariable("gid") String gid){

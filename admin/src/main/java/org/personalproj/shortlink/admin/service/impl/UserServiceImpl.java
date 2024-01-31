@@ -51,7 +51,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
     public UserRespDTO getUserByUserName(String username) {
         UserDO queryResult = query()
                 .eq("username", username)
-                .eq("del_flag",0).one();
+                .eq("del_flag", 0).one();
         if (queryResult == null) {
             throw new ClientException(UserErrorCode.USER_NULL);
         }
@@ -62,7 +62,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
     public UserActualRespDTO getUserActualInfoByUserName(String username) {
         UserDO queryResult = query()
                 .eq("username", username)
-                .eq("del_flag",0).one();
+                .eq("del_flag", 0).one();
         if (queryResult == null) {
             throw new ClientException(UserErrorCode.USER_NULL);
         }
@@ -70,17 +70,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
     }
 
     @Override
-    public Boolean hasNickName(String nickName) {return userNickNameCachePenetrationBloomFilter.contains(nickName);}
+    public Boolean hasNickName(String nickName) {
+        return userNickNameCachePenetrationBloomFilter.contains(nickName);
+    }
 
-    private String generateUserName(){
-        if(Boolean.FALSE.equals(stringRedisTemplate.hasKey(USER_COUNT_KEY))){
-            stringRedisTemplate.opsForValue().set(USER_COUNT_KEY,"0");
+    private String generateUserName() {
+        if (Boolean.FALSE.equals(stringRedisTemplate.hasKey(USER_COUNT_KEY))) {
+            stringRedisTemplate.opsForValue().set(USER_COUNT_KEY, "0");
         }
         Long userCount = stringRedisTemplate.opsForValue().increment(USER_COUNT_KEY);
-        if(userCount / 1000000000L > 0){
-            return UUID.fastUUID().toString(false).substring(0,9);
+        if (userCount / 1000000000L > 0) {
+            return UUID.fastUUID().toString(false).substring(0, 9);
         } else {
-            return UUID.fastUUID().toString(false).substring(0,8);
+            return UUID.fastUUID().toString(false).substring(0, 8);
         }
 
     }
@@ -97,7 +99,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
         String token = request.getHeader("authorization");
         String userLoginKey = USER_LOGIN_KEY + token;
         Boolean delete = stringRedisTemplate.delete(userLoginKey);
-        if(Boolean.FALSE.equals(delete)){
+        if (Boolean.FALSE.equals(delete)) {
             throw new ClientException(USER_LOGIN_OUT_ERROR);
         }
 
@@ -163,7 +165,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
         UserDO userDO = BeanUtil.copyProperties(userUpdateReqDTO, UserDO.class);
         boolean success = update(userDO, Wrappers.lambdaUpdate(UserDO.class)
                 .eq(UserDO::getUsername, userUpdateReqDTO.getUsername())
-                        .eq(UserDO::getDelFlag,0));
+                .eq(UserDO::getDelFlag, 0));
         // 更新失败则抛出异常，更新成功则需要在布隆过滤器里面加上更新后的userName
         if (!success) {
             throw new ClientException(UserErrorCode.USER_UPDATE_ERROR);

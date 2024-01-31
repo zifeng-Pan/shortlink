@@ -8,11 +8,13 @@ import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.admin.common.convention.exception.ClientException;
 import org.personalproj.shortlink.admin.dao.entity.GroupDO;
 import org.personalproj.shortlink.admin.dao.mapper.GroupMapper;
-import org.personalproj.shortlink.admin.dto.req.GroupUpdateDTO;
+import org.personalproj.shortlink.admin.dto.req.GroupSortReqDTO;
+import org.personalproj.shortlink.admin.dto.req.GroupUpdateReqDTO;
 import org.personalproj.shortlink.admin.dto.resp.GroupRespDTO;
 import org.personalproj.shortlink.admin.service.GroupService;
 import org.personalproj.shortlink.admin.toolkit.UserHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -33,6 +35,7 @@ import static org.personalproj.shortlink.admin.common.enums.GroupErrorCode.GROUP
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implements GroupService {
 
     @Override
+    @Transactional(rollbackFor = {RuntimeException.class})
     public void saveGroup(String groupName) {
         String gid;
         String username = UserHolder.getUser().getUsername();
@@ -65,14 +68,14 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
      * 短链接组属性更新
      */
     @Override
-    public void updateGroup(GroupUpdateDTO groupUpdateDTO) {
+    @Transactional(rollbackFor = {RuntimeException.class})
+    public void updateGroup(GroupUpdateReqDTO groupUpdateReqDTO) {
         GroupDO groupDO = new GroupDO();
-        groupDO.setName(groupUpdateDTO.getName());
-        groupDO.setSortOrder(groupUpdateDTO.getSortOrder());
+        groupDO.setName(groupUpdateReqDTO.getName());
         groupDO.setUpdateTime(new Date());
         boolean isSuccess = update(groupDO, Wrappers.lambdaUpdate(GroupDO.class)
                 .eq(GroupDO::getUsername, UserHolder.getUser().getUsername())
-                .eq(GroupDO::getGid, groupUpdateDTO.getGid())
+                .eq(GroupDO::getGid, groupUpdateReqDTO.getGid())
                 .eq(GroupDO::getDelFlag, 0)
         );
         if(!isSuccess){
@@ -86,6 +89,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
      * 短链接组删除
      */
     @Override
+    @Transactional(rollbackFor = {RuntimeException.class})
     public void removeGroup(String gid) {
         GroupDO groupDO = new GroupDO();
         groupDO.setDelFlag(1);
@@ -97,6 +101,22 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         if(!isSuccess){
             throw new ClientException(GROUP_UPDATE_ERROR);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = {RuntimeException.class})
+    public void sorOrderUpdate(List<GroupSortReqDTO> groupSortReqDTOList) {
+        groupSortReqDTOList.forEach(groupSortReqDTO -> {
+            GroupDO groupDO = GroupDO.builder().gid(groupSortReqDTO.getGid()).sortOrder(groupSortReqDTO.getSortOrder()).build();
+            boolean isSuccess = update(groupDO, Wrappers.lambdaUpdate(GroupDO.class)
+                    .eq(GroupDO::getGid, groupDO.getGid())
+                    .eq(GroupDO::getDelFlag, 0)
+                    .eq(GroupDO::getUsername, UserHolder.getUser().getUsername())
+            );
+            if(!isSuccess){
+                throw new ClientException(GROUP_UPDATE_ERROR);
+            }
+        });
     }
 
 
