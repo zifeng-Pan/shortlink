@@ -51,7 +51,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
     public UserRespDTO getUserByUserName(String username) {
         UserDO queryResult = query()
                 .eq("username", username)
-                .eq("delFlag",0).one();
+                .eq("del_flag",0).one();
         if (queryResult == null) {
             throw new ClientException(UserErrorCode.USER_NULL);
         }
@@ -62,7 +62,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
     public UserActualRespDTO getUserActualInfoByUserName(String username) {
         UserDO queryResult = query()
                 .eq("username", username)
-                .eq("delFlag",0).one();
+                .eq("del_flag",0).one();
         if (queryResult == null) {
             throw new ClientException(UserErrorCode.USER_NULL);
         }
