@@ -3,6 +3,9 @@ package org.personalproj.shortlink.admin.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.personalproj.shortlink.admin.dao.entity.GroupDO;
+import org.personalproj.shortlink.admin.dto.resp.GroupRespDTO;
+
+import java.util.List;
 
 /**
  * @author panzifeng
@@ -10,4 +13,15 @@ import org.personalproj.shortlink.admin.dao.entity.GroupDO;
  * @createDate 2024-01-31 13:30:52
  */
 public interface GroupService extends IService<GroupDO> {
+
+    /**
+     * @description: 新增短链接分组
+     * @author: PzF
+     * @date: 2024/1/31 14:39
+     * @param: [groupName：短链接分组名]
+     * @return: void
+     **/
+    void saveGroup(String groupName);
+
+    List<GroupRespDTO> getGroups();
 }
