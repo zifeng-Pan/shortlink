@@ -3,6 +3,7 @@ package org.personalproj.shortlink.admin.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.personalproj.shortlink.admin.dao.entity.GroupDO;
+import org.personalproj.shortlink.admin.dto.req.GroupUpdateDTO;
 import org.personalproj.shortlink.admin.dto.resp.GroupRespDTO;
 
 import java.util.List;
@@ -24,4 +25,6 @@ public interface GroupService extends IService<GroupDO> {
     void saveGroup(String groupName);
 
     List<GroupRespDTO> getGroups();
+
+    void updateGroup(GroupUpdateDTO groupUpdateDTO);
 }

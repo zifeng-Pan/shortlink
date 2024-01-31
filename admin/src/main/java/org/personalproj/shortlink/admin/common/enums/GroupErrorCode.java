@@ -12,7 +12,8 @@ import org.personalproj.shortlink.admin.common.convention.errorcode.IStatusCode;
  */
 public enum GroupErrorCode implements IStatusCode {
     // ========== 二级宏观错误码 用户短链接组相关错误 ==========
-    GROUP_SAVE_ERROR("B000300","短链接组添加失败");
+    GROUP_SAVE_ERROR("B000300","短链接组添加失败"),
+    GROUP_UPDATE_ERROR("B000301","短链接组更新失败");
 
 
     private final String code;

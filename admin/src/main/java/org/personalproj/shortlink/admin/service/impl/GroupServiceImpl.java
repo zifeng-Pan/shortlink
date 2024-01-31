@@ -2,19 +2,23 @@ package org.personalproj.shortlink.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.admin.common.convention.exception.ClientException;
 import org.personalproj.shortlink.admin.dao.entity.GroupDO;
 import org.personalproj.shortlink.admin.dao.mapper.GroupMapper;
+import org.personalproj.shortlink.admin.dto.req.GroupUpdateDTO;
 import org.personalproj.shortlink.admin.dto.resp.GroupRespDTO;
 import org.personalproj.shortlink.admin.service.GroupService;
 import org.personalproj.shortlink.admin.toolkit.UserHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 import static org.personalproj.shortlink.admin.common.enums.GroupErrorCode.GROUP_SAVE_ERROR;
+import static org.personalproj.shortlink.admin.common.enums.GroupErrorCode.GROUP_UPDATE_ERROR;
 
 /**
  * @BelongsProject: shortlink
@@ -51,9 +55,31 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
     @Override
     public List<GroupRespDTO> getGroups() {
         String username = UserHolder.getUser().getUsername();
-        List<GroupDO> groupDOList = query().eq("username", username).eq("del_flag",0).orderByDesc("sortOrder", "updateTime").list();
+        List<GroupDO> groupDOList = query().eq("username", username).eq("del_flag",0).orderByDesc("sort_order", "update_time").list();
         return BeanUtil.copyToList(groupDOList, GroupRespDTO.class);
     }
+
+
+    /**
+     *
+     * 短链接组属性更新
+     */
+    @Override
+    public void updateGroup(GroupUpdateDTO groupUpdateDTO) {
+        GroupDO groupDO = new GroupDO();
+        groupDO.setName(groupUpdateDTO.getName());
+        groupDO.setSortOrder(groupUpdateDTO.getSortOrder());
+        groupDO.setUpdateTime(new Date());
+        boolean isSuccess = update(groupDO, Wrappers.lambdaUpdate(GroupDO.class)
+                .eq(GroupDO::getUsername, UserHolder.getUser().getUsername())
+                .eq(GroupDO::getGid, groupUpdateDTO.getGid())
+                .eq(GroupDO::getDelFlag, 0)
+        );
+        if(!isSuccess){
+            throw new ClientException(GROUP_UPDATE_ERROR);
+        }
+    }
+
 
     /**
      *

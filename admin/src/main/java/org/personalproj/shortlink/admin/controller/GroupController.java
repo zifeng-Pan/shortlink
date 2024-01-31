@@ -3,12 +3,10 @@ package org.personalproj.shortlink.admin.controller;
 import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.admin.common.convention.result.Result;
 import org.personalproj.shortlink.admin.common.convention.result.Results;
+import org.personalproj.shortlink.admin.dto.req.GroupUpdateDTO;
 import org.personalproj.shortlink.admin.dto.resp.GroupRespDTO;
 import org.personalproj.shortlink.admin.service.GroupService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -28,7 +26,7 @@ public class GroupController {
 
     private final GroupService groupService;
 
-    @GetMapping("/{groupname}")
+    @GetMapping("/save/{groupname}")
     public Result<Void> saveNewGroupByGroupName(@PathVariable("groupname") String groupName){
         groupService.saveGroup(groupName);
         return Results.success();
@@ -37,5 +35,11 @@ public class GroupController {
     @GetMapping("/list")
     public Result<List<GroupRespDTO>> getGroups(){
         return Results.success(groupService.getGroups());
+    }
+
+    @PostMapping("/update")
+    public Result<Void> updateGroup(@RequestBody GroupUpdateDTO groupUpdateDTO){
+        groupService.updateGroup(groupUpdateDTO);
+        return Results.success();
     }
 }
