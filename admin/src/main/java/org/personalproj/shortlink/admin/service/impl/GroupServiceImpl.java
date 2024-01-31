@@ -83,6 +83,25 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
 
     /**
      *
+     * 短链接组删除
+     */
+    @Override
+    public void removeGroup(String gid) {
+        GroupDO groupDO = new GroupDO();
+        groupDO.setDelFlag(1);
+        boolean isSuccess = update(groupDO, Wrappers.lambdaUpdate(GroupDO.class)
+                .eq(GroupDO::getGid, gid)
+                .eq(GroupDO::getUsername, UserHolder.getUser().getUsername())
+                .eq(GroupDO::getDelFlag, 0)
+        );
+        if(!isSuccess){
+            throw new ClientException(GROUP_UPDATE_ERROR);
+        }
+    }
+
+
+    /**
+     *
      * 判断gid是否存在
      */
     private boolean hasGid(String gid, String username){

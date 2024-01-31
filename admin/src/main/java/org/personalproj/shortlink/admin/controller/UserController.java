@@ -87,7 +87,7 @@ public class UserController {
     /**
      * 用户信息更新
      */
-    @PostMapping("/update")
+    @PutMapping("/update")
     public Result<Void> userUpdate(@RequestBody UserUpdateReqDTO userUpdateReqDTO) {
         userService.update(userUpdateReqDTO);
         return Results.success();

@@ -26,20 +26,40 @@ public class GroupController {
 
     private final GroupService groupService;
 
+    /**
+     *
+     * 新生成一个短链接组
+     */
     @GetMapping("/save/{groupname}")
     public Result<Void> saveNewGroupByGroupName(@PathVariable("groupname") String groupName){
         groupService.saveGroup(groupName);
         return Results.success();
     }
 
+    /**
+     *
+     * 获取当前登录用户的所有短链接组
+     */
     @GetMapping("/list")
     public Result<List<GroupRespDTO>> getGroups(){
         return Results.success(groupService.getGroups());
     }
 
-    @PostMapping("/update")
+    /**
+     *
+     * 更新短链接组
+     */
+    @PutMapping("/update")
     public Result<Void> updateGroup(@RequestBody GroupUpdateDTO groupUpdateDTO){
         groupService.updateGroup(groupUpdateDTO);
         return Results.success();
     }
+
+    @GetMapping("/remove/{gid}")
+    public Result<Void> removeGroup(@PathVariable("gid") String gid){
+        groupService.removeGroup(gid);
+        return Results.success();
+    }
+
+
 }
