@@ -11,7 +11,7 @@ import lombok.Data;
  * @Version: 1.0
  */
 @Data
-public class GroupUpdateDTO {
+public class GroupUpdateReqDTO {
     /**
      * 分组标识
      */
@@ -21,9 +21,4 @@ public class GroupUpdateDTO {
      * 分组名称
      */
     private String name;
-
-    /**
-     * 分组排序
-     */
-    private Integer sortOrder;
 }
