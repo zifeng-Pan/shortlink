@@ -1,6 +1,7 @@
 package org.personalproj.shortlink.admin.common.enums;
 
-import org.personalproj.shortlink.admin.common.convention.errorcode.IStatusCode;
+
+import org.personalproj.shortlink.common.convention.errorcode.IStatusCode;
 
 /**
  * @BelongsProject: shortlink

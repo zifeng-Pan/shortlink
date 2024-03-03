@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.personalproj.shortlink.admin.common.constnat.RedisCacheConstant;
-import org.personalproj.shortlink.admin.common.convention.exception.ClientException;
 import org.personalproj.shortlink.admin.common.enums.UserErrorCode;
 import org.personalproj.shortlink.admin.dao.entity.UserDO;
 import org.personalproj.shortlink.admin.dao.mapper.UserMapper;
@@ -20,6 +18,8 @@ import org.personalproj.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserRespDTO;
 import org.personalproj.shortlink.admin.service.UserService;
 import org.personalproj.shortlink.admin.toolkit.JWTUtil;
+import org.personalproj.shortlink.common.constnat.RedisCacheConstant;
+import org.personalproj.shortlink.common.convention.exception.ClientException;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -27,8 +27,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.personalproj.shortlink.admin.common.constnat.RedisCacheConstant.*;
 import static org.personalproj.shortlink.admin.common.enums.UserErrorCode.USER_LOGIN_OUT_ERROR;
+import static org.personalproj.shortlink.admin.common.enums.UserErrorCode.USER_NAME_EXIST;
+import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.*;
 
 /**
  * @author panzifeng
@@ -79,6 +80,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
             stringRedisTemplate.opsForValue().set(USER_COUNT_KEY, "0");
         }
         Long userCount = stringRedisTemplate.opsForValue().increment(USER_COUNT_KEY);
+        assert userCount != null;
         if (userCount / 1000000000L > 0) {
             return UUID.fastUUID().toString(false).substring(0, 9);
         } else {
@@ -129,7 +131,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
     @Override
     @Transactional(rollbackFor = {RuntimeException.class})
     public String register(UserRegisterReqDTO userRegisterReqDTO) {
-        // 前端调用hasUserName接口防止重复
+        // 前端调用hasUserName接口防止重复，这里再加一层进行兜底
+        if(hasNickName(userRegisterReqDTO.getNickname())){
+            throw new ClientException(USER_NAME_EXIST);
+        }
         UserDO userDO = BeanUtil.copyProperties(userRegisterReqDTO, UserDO.class);
 
         // 对于大量的恶意相同用户名的注册，每一次注册先拿到对应的锁，没有拿到就不允许相同用户名注册,抛出用户已经存在的异常。

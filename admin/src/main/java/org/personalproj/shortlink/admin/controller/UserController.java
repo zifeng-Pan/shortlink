@@ -2,8 +2,6 @@ package org.personalproj.shortlink.admin.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.personalproj.shortlink.admin.common.convention.result.Result;
-import org.personalproj.shortlink.admin.common.convention.result.Results;
 import org.personalproj.shortlink.admin.dto.req.UserLoginReqDTO;
 import org.personalproj.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.personalproj.shortlink.admin.dto.req.UserUpdateReqDTO;
@@ -11,6 +9,8 @@ import org.personalproj.shortlink.admin.dto.resp.UserActualRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserRespDTO;
 import org.personalproj.shortlink.admin.service.UserService;
+import org.personalproj.shortlink.common.convention.result.Result;
+import org.personalproj.shortlink.common.convention.result.Results;
 import org.springframework.web.bind.annotation.*;
 
 /**

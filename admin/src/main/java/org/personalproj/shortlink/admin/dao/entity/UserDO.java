@@ -8,8 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.personalproj.shortlink.admin.common.database.BaseDO;
+import org.personalproj.shortlink.common.database.BaseDO;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -65,5 +66,6 @@ public class UserDO extends BaseDO implements Serializable {
     private Long deletionTime;
 
     @TableField(exist = false)
+    @Serial
     private static final long serialVersionUID = 1L;
 }
