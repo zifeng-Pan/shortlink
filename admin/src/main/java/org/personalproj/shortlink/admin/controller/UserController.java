@@ -68,7 +68,7 @@ public class UserController {
      *
      * 用户登出
      */
-    @GetMapping("/logout")
+    @DeleteMapping("/logout")
     public Result<Void> logOut(HttpServletRequest request){
         userService.logOut(request);
         return Results.success();

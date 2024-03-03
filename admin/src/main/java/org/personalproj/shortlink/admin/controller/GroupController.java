@@ -67,7 +67,7 @@ public class GroupController {
     }
 
 
-    @GetMapping("/remove/{gid}")
+    @DeleteMapping("/remove/{gid}")
     public Result<Void> removeGroup(@PathVariable("gid") String gid){
         groupService.removeGroup(gid);
         return Results.success();
