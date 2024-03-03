@@ -29,7 +29,7 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
         LoginCheckInterceptor loginCheckInterceptor = new LoginCheckInterceptor(stringRedisTemplate);
         InterceptorRegistration interceptors = registry.addInterceptor(loginCheckInterceptor);
         interceptors.excludePathPatterns(
-                "/api/shortlink/v1/user/admin/**"
+                "/api/shortlink/admin/v1/user/common/**"
                 ).order(1);
     }
 }

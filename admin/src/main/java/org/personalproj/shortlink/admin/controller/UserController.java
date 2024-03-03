@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
  * @Version: 1.0
  */
 @RestController
-@RequestMapping("/api/shortlink/v1/user")
+@RequestMapping("/api/shortlink/admin/v1/user")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -31,7 +31,7 @@ public class UserController {
     /**
      * @description: 根据用户名查询信息
      **/
-    @GetMapping("/admin/{username}")
+    @GetMapping("/common/{username}")
     public Result<UserRespDTO> getUserByUsername(@PathVariable("username") String username) {
         UserRespDTO result = userService.getUserByUserName(username);
         return Results.success(result);
@@ -42,13 +42,13 @@ public class UserController {
     /**
      * 获取用户真实未脱敏信息
      */
-    @GetMapping("/admin/actual/{username}")
+    @GetMapping("/common/actual/{username}")
     public Result<UserActualRespDTO> getUserActualInfoByUsername(@PathVariable("username") String username) {
         UserActualRespDTO result = userService.getUserActualInfoByUserName(username);
         return Results.success(result);
     }
 
-    @GetMapping("/admin/nickname-available/{nickname}")
+    @GetMapping("/common/nickname-available/{nickname}")
     public Result<Boolean> userNickNameAvailable(@PathVariable("nickname") String nickname){
         return Results.success(!userService.hasNickName(nickname));
     }
@@ -58,7 +58,7 @@ public class UserController {
      *
      * 用户登录
      */
-    @PostMapping("/admin/login")
+    @PostMapping("/common/login")
     public Result<UserLoginRespDTO> login(@RequestBody UserLoginReqDTO userLoginReqDTO){
         UserLoginRespDTO respDTO = userService.login(userLoginReqDTO);
         return Results.success(respDTO);
@@ -78,7 +78,7 @@ public class UserController {
     /**
      * 新用户注册
      */
-    @PostMapping("/admin/register")
+    @PostMapping("/common/register")
     public Result<String> userRegister(@RequestBody UserRegisterReqDTO userRegisterReqDTO) {
         return Results.success(userService.register(userRegisterReqDTO));
     }
