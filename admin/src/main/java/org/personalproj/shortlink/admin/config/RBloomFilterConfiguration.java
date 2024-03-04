@@ -1,4 +1,4 @@
-package org.personalproj.shortlink.admin.common.config;
+package org.personalproj.shortlink.admin.config;
 
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;
@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * @BelongsProject: shortlink
- * @BelongsPackage: org.personalproj.shortlink.admin.common.config
+ * @BelongsPackage: org.personalproj.shortlink.admin.config
  * @Author: PzF
  * @CreateTime: 2024-03-03  16:29
  * @Description: 利用Redisson中的布隆过滤器防止缓存穿透

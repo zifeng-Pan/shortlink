@@ -1,4 +1,4 @@
-package org.personalproj.shortlink.admin.common.config;
+package org.personalproj.shortlink.admin.config;
 
 import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.admin.common.interceptor.LoginCheckInterceptor;
@@ -10,7 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * @BelongsProject: shortlink
- * @BelongsPackage: org.personalproj.shortlink.admin.common.config
+ * @BelongsPackage: org.personalproj.shortlink.admin.config
  * @Author: PzF
  * @CreateTime: 2024-01-30  20:16
  * @Description: Web相关配置
