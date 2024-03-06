@@ -89,6 +89,12 @@ public class ShortLinkDO extends BaseDO implements Serializable{
      */
     private String description;
 
+    /**
+     *
+     * 短链接相关图标
+     */
+    private String favicon;
+
     @TableField(exist = false)
     @Serial
     private static final long serialVersionUID = 1L;

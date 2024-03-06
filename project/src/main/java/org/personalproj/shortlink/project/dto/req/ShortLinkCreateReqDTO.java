@@ -49,4 +49,10 @@ public class ShortLinkCreateReqDTO {
      * 短链接相关描述
      */
     private String description;
+
+    /**
+     *
+     * 短链接相关图标
+     */
+    private String favicon;
 }
