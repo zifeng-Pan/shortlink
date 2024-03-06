@@ -16,7 +16,8 @@ import org.springframework.context.annotation.Import;
 @SpringBootApplication
 @Import(value = {
         org.personalproj.shortlink.common.web.GlobalExceptionHandler.class,
-        org.personalproj.shortlink.common.config.MyMetaObjectHandler.class
+        org.personalproj.shortlink.common.config.MyMetaObjectHandler.class,
+        org.personalproj.shortlink.common.config.MyBatisConfiguration.class
 })
 @MapperScan("org.personalproj.shortlink.project.dao.mapper")
 public class ShortLinkProjectApplication {

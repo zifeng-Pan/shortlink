@@ -13,8 +13,11 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
 @MapperScan("org.personalproj.shortlink.admin.dao.mapper")
-@Import(value = {org.personalproj.shortlink.common.config.MyMetaObjectHandler.class,
-        org.personalproj.shortlink.common.web.GlobalExceptionHandler.class})
+@Import(value = {
+        org.personalproj.shortlink.common.config.MyMetaObjectHandler.class,
+        org.personalproj.shortlink.common.web.GlobalExceptionHandler.class,
+        org.personalproj.shortlink.common.config.MyBatisConfiguration.class
+})
 public class ShortLinkAdminApplication {
     public static void main(String[] args) {
         SpringApplication.run(ShortLinkAdminApplication.class,args);
