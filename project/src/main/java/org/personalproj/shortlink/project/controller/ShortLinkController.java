@@ -1,15 +1,15 @@
 package org.personalproj.shortlink.project.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.common.convention.result.Result;
 import org.personalproj.shortlink.common.convention.result.Results;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
+import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.personalproj.shortlink.project.service.ShortLinkService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @BelongsProject: shortlink
@@ -29,5 +29,10 @@ public class ShortLinkController {
     @PostMapping("/create")
     public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO shortLinkCreateReqDTO){
         return Results.success(shortLinkService.create(shortLinkCreateReqDTO));
+    }
+
+    @PostMapping("/page")
+    public Result<IPage<ShortLinkPageRespDTO>> shortLinkPageQuery(@RequestBody ShortLinkPageReqDTO shortLinkPageReqDTO){
+        return Results.success(shortLinkService.pageQuery(shortLinkPageReqDTO));
     }
 }

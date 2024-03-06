@@ -1,9 +1,12 @@
 package org.personalproj.shortlink.project.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
+import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 
 /**
 * @author panzifeng
@@ -13,4 +16,6 @@ import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 public interface ShortLinkService extends IService<ShortLinkDO> {
 
     ShortLinkCreateRespDTO create(ShortLinkCreateReqDTO shortLinkCreateReqDTO);
+
+    IPage<ShortLinkPageRespDTO> pageQuery(ShortLinkPageReqDTO shortLinkPageReqDTO);
 }

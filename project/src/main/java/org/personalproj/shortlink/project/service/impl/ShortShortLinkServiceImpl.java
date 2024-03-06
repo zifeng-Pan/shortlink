@@ -2,6 +2,9 @@ package org.personalproj.shortlink.project.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +12,9 @@ import org.personalproj.shortlink.common.convention.exception.ServerException;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
+import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.personalproj.shortlink.project.service.ShortLinkService;
 import org.personalproj.shortlink.project.toolkit.ShortLinkHashUtil;
 import org.redisson.api.RBloomFilter;
@@ -95,6 +100,22 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 .build();
 
 
+    }
+
+    /**
+     * @description: 根据分组标识查询到某一分组下面的短链接，并分页返回
+     * @author: PzF
+     * @date: 2024/3/6 17:26
+     * @param: [shortLinkPageReqDTO]
+     * @return: com.baomidou.mybatisplus.core.metadata.IPage<org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO>
+     **/
+    @Override
+    public IPage<ShortLinkPageRespDTO> pageQuery(ShortLinkPageReqDTO shortLinkPageReqDTO) {
+        LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
+                .eq(ShortLinkDO::getGid, shortLinkPageReqDTO.getGid())
+                .eq(ShortLinkDO::getDelFlag, 0);
+        IPage<ShortLinkDO> resultPage =  baseMapper.selectPage(shortLinkPageReqDTO, queryWrapper);
+        return resultPage.convert(row -> BeanUtil.toBean(row, ShortLinkPageRespDTO.class));
     }
 
     private String generateSuffix(ShortLinkCreateReqDTO shortLinkCreateReqDTO){
