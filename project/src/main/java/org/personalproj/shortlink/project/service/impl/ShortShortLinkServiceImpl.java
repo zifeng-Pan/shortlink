@@ -1,6 +1,7 @@
 package org.personalproj.shortlink.project.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.UUID;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,12 +61,12 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         shortLink.setShortUri(shortLinkSuffix);
         shortLink.setEnableStatus(0);
 
-        // 通过锁来限制同时多个请求产生的并发问题（概率比较小），通过事务保证保存数据库以及布隆过滤器添加的原子性
+        // 通过锁来限制同时多个请求产生的并发问题（概率比较小），加锁的目的是在后端层面限制对于重复的完整短链接，只添加一次，减少和数据库交互
         RLock lock = redissonClient.getLock(LOCK_SHORT_LINK_CREATE + shortLink.getFullShortUrl());
 
         try{
             if (lock.tryLock()){
-                // 编程式事务管理，让save和加入布隆过滤器放在一个事务中
+                // 编程式事务管理，让save和加入布隆过滤器放在一个事务中，事务保证保存数据库以及布隆过滤器添加的原子性【防止一些异常导致数据库插入成功但是没有加入到布隆过滤器中】
                 TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
                 try {
                     save(shortLink);
@@ -105,7 +106,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 throw new ServerException("短链接频繁生成重试，请稍后再试");
             }
 
-            shortUri = ShortLinkHashUtil.hash2Base62String(originUrl + System.currentTimeMillis());
+            shortUri = ShortLinkHashUtil.hash2Base62String(originUrl + UUID.randomUUID());
             // 保证域名下短链接唯一即可，不需要保证全局唯一
             // 布隆过滤器的误判主要是两个不同的值经过哈希函数计算得到了相同的哈希值，比如这里两个不同的短链接可能得到同一个哈希值从而判定为短链接重复
             // 这里的循环解决的就是这种误判的情况
