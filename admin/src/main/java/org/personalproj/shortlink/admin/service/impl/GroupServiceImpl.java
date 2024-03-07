@@ -105,7 +105,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
 
     @Override
     @Transactional(rollbackFor = {RuntimeException.class})
-    public void sorOrderUpdate(List<GroupSortReqDTO> groupSortReqDTOList) {
+    public void sortOrderUpdate(List<GroupSortReqDTO> groupSortReqDTOList) {
         groupSortReqDTOList.forEach(groupSortReqDTO -> {
             GroupDO groupDO = GroupDO.builder().gid(groupSortReqDTO.getGid()).sortOrder(groupSortReqDTO.getSortOrder()).build();
             boolean isSuccess = update(groupDO, Wrappers.lambdaUpdate(GroupDO.class)

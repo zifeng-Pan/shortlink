@@ -62,7 +62,7 @@ public class GroupController {
      */
     @PostMapping("/sort-batch")
     public Result<Void> updateGroupSortOrderBatch(@RequestBody List<GroupSortReqDTO> groupSortReqDTOList){
-        groupService.sorOrderUpdate(groupSortReqDTOList);
+        groupService.sortOrderUpdate(groupSortReqDTOList);
         return Results.success();
     }
 

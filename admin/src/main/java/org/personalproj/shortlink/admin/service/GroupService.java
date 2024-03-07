@@ -31,5 +31,5 @@ public interface GroupService extends IService<GroupDO> {
 
     void removeGroup(String gid);
 
-    void sorOrderUpdate(List<GroupSortReqDTO> groupSortReqDTOS);
+    void sortOrderUpdate(List<GroupSortReqDTO> groupSortReqDTOS);
 }
