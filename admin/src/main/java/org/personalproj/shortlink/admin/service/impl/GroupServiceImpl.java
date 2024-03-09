@@ -36,9 +36,14 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
 
     @Override
     @Transactional(rollbackFor = {RuntimeException.class})
-    public void saveGroup(String groupName) {
+    public void saveGroup(String groupName){
+        this.saveGroup(groupName,UserHolder.getUser().getUsername());
+    }
+
+    @Override
+    @Transactional(rollbackFor = {RuntimeException.class})
+    public void saveGroup(String groupName, String username) {
         String gid;
-        String username = UserHolder.getUser().getUsername();
         do{
             gid = RandomUtil.randomString(6);
         } while (hasGid(gid,username));
@@ -125,7 +130,10 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
      * 判断gid是否存在
      */
     private boolean hasGid(String gid, String username){
-        GroupDO groupDO = query().eq("gid", gid).eq("del_flag",0).eq("username", username).one();
+        GroupDO groupDO = query()
+                .eq("gid", gid)
+                .eq("del_flag",0)
+                .eq("username", username).one();
         return groupDO != null;
     }
 }

@@ -16,6 +16,7 @@ import org.personalproj.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserActualRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.personalproj.shortlink.admin.dto.resp.UserRespDTO;
+import org.personalproj.shortlink.admin.service.GroupService;
 import org.personalproj.shortlink.admin.service.UserService;
 import org.personalproj.shortlink.admin.toolkit.JWTUtil;
 import org.personalproj.shortlink.common.constnat.RedisCacheConstant;
@@ -46,6 +47,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
     private final RedissonClient redissonClient;
 
     private final StringRedisTemplate stringRedisTemplate;
+
+    private final GroupService groupService;
 
 
     @Override
@@ -148,8 +151,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO>
                 if (!success) {
                     throw new ClientException(UserErrorCode.USER_REGISTER_ERROR);
                 }
-
                 userNickNameCachePenetrationBloomFilter.add(userDO.getNickname());
+                groupService.saveGroup("DefaultGroup");
             } else {
                 throw new ClientException(UserErrorCode.USER_NAME_EXIST);
             }

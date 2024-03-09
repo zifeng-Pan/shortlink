@@ -25,6 +25,15 @@ public interface GroupService extends IService<GroupDO> {
      **/
     void saveGroup(String groupName);
 
+    /**
+     * @description: 根据分组名称和用户名称进行分组新增
+     * @author: PzF
+     * @date: 2024/3/9 18:40
+     * @param: [groupName, username]
+     * @return: void
+     **/
+    void saveGroup(String groupName, String username);
+
     List<GroupRespDTO> getGroups();
 
     void updateGroup(GroupUpdateReqDTO groupUpdateReqDTO);
