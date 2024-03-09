@@ -9,9 +9,12 @@ import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespD
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
 import org.personalproj.shortlink.common.convention.result.Result;
+import org.personalproj.shortlink.common.convention.result.Results;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @BelongsProject: shortlink
@@ -41,11 +44,15 @@ public class ShortLinkController {
     }
 
     @GetMapping("/count")
-    public Result<List<ShortLinkCountQueryRespDTO>> page(@RequestParam(value = "gidList") List<String> gidList){
-        return shortLinkRemoteService.countShortLinkByGroup(gidList);
+    public Result<Map<String,Integer>> page(@RequestParam(value = "gidList") List<String> gidList){
+        Result<List<ShortLinkCountQueryRespDTO>> listResult = shortLinkRemoteService.countShortLinkByGroup(gidList);
+        List<ShortLinkCountQueryRespDTO> shortLinkCountQueryRespDTOList = listResult.getData();
+        Map<String, Integer> shortLinkCountQueryRespMap = new HashMap<>(5);
+        shortLinkCountQueryRespDTOList
+                .forEach(
+                shortLinkCountQueryRespDTO -> {
+                    shortLinkCountQueryRespMap.put(shortLinkCountQueryRespDTO.getGid(),shortLinkCountQueryRespDTO.getShortLinkCount());
+                });
+        return Results.success(shortLinkCountQueryRespMap);
     }
-
-
-
-
 }
