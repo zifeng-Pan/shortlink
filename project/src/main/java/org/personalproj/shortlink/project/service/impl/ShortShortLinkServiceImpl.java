@@ -3,6 +3,7 @@ package org.personalproj.shortlink.project.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,6 +14,7 @@ import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.personalproj.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.personalproj.shortlink.project.service.ShortLinkService;
@@ -25,6 +27,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.LOCK_SHORT_LINK_CREATE;
 
@@ -44,13 +49,6 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     private final PlatformTransactionManager transactionManager;
 
-    /**
-     * @description: 根据用户POST生成的短链接创建DTO，生成短链接并保存进入数据库，同时返回响应DTO
-     * @author: PzF
-     * @date: 2024/3/6 14:00
-     * @param: [shortLinkCreateReqDTO]
-     * @return: org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO
-     **/
     @Override
     public ShortLinkCreateRespDTO create(ShortLinkCreateReqDTO shortLinkCreateReqDTO) {
         // 事务控制数据库保存以及布隆过滤器的原子性
@@ -102,13 +100,6 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     }
 
-    /**
-     * @description: 根据分组标识查询到某一分组下面的短链接，并分页返回
-     * @author: PzF
-     * @date: 2024/3/6 17:26
-     * @param: [shortLinkPageReqDTO]
-     * @return: com.baomidou.mybatisplus.core.metadata.IPage<org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO>
-     **/
     @Override
     public IPage<ShortLinkPageRespDTO> pageQuery(ShortLinkPageReqDTO shortLinkPageReqDTO) {
         LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
@@ -116,6 +107,17 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 .eq(ShortLinkDO::getDelFlag, 0);
         IPage<ShortLinkDO> resultPage =  baseMapper.selectPage(shortLinkPageReqDTO, queryWrapper);
         return resultPage.convert(row -> BeanUtil.toBean(row, ShortLinkPageRespDTO.class));
+    }
+
+    @Override
+    public List<ShortLinkCountQueryRespDTO> shortLinkCountQuery(List<String> gidList) {
+        QueryWrapper<ShortLinkDO> queryWrapper = Wrappers.query(new ShortLinkDO())
+                .select("gid as gid,count(*) as shortLinkCount")
+                .in("gid", gidList)
+                .eq("del_flag", 0)
+                .groupBy("gid");
+        List<Map<String,Object>> shortLinkCountMaps = baseMapper.selectMaps(queryWrapper);
+        return BeanUtil.copyToList(shortLinkCountMaps, ShortLinkCountQueryRespDTO.class);
     }
 
     private String generateSuffix(ShortLinkCreateReqDTO shortLinkCreateReqDTO){

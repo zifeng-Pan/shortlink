@@ -6,10 +6,13 @@ import org.personalproj.shortlink.common.convention.result.Result;
 import org.personalproj.shortlink.common.convention.result.Results;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.personalproj.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.personalproj.shortlink.project.service.ShortLinkService;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @BelongsProject: shortlink
@@ -34,5 +37,10 @@ public class ShortLinkController {
     @PostMapping("/page")
     public Result<IPage<ShortLinkPageRespDTO>> shortLinkPageQuery(@RequestBody ShortLinkPageReqDTO shortLinkPageReqDTO){
         return Results.success(shortLinkService.pageQuery(shortLinkPageReqDTO));
+    }
+
+    @GetMapping("/count")
+    public Result<List<ShortLinkCountQueryRespDTO>> shortLinkCountQuery(@RequestParam(value = "gidList") List<String> gidList){
+        return Results.success(shortLinkService.shortLinkCountQuery(gidList));
     }
 }

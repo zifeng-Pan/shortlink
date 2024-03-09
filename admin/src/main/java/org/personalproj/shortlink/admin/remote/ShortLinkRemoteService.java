@@ -1,15 +1,21 @@
 package org.personalproj.shortlink.admin.remote;
 
 import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
+import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
 import org.personalproj.shortlink.common.convention.result.Result;
+
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -24,9 +30,8 @@ public interface ShortLinkRemoteService {
     default Result<IPage<ShortLinkPageRespDTO>> pageShortLink(ShortLinkPageReqDTO shortLinkPageReqDTO){
 
         HttpRequest httpRequest = HttpUtil.createPost("http://127.0.0.1:8001/api/shortlink/project/v1/core/page").body(JSON.toJSONString(shortLinkPageReqDTO));
-        HttpResponse execute = httpRequest.execute();
         // 主要是利用HuTool的工具向短链接后台核心的Controller发送远程调用请求，根据返回来的Json数据解析成对象并返回
-        return JSON.parseObject(execute.body(), Result.class);
+        return JSON.parseObject(httpRequest.execute().body(), Result.class);
     }
 
 
@@ -37,6 +42,20 @@ public interface ShortLinkRemoteService {
     default Result<ShortLinkCreateRespDTO> createShortLink(ShortLinkCreateReqDTO shortLinkCreateReqDTO){
         HttpRequest httpRequest = HttpUtil.createPost("http://127.0.0.1:8001/api/shortlink/project/v1/core/create").body(JSON.toJSONString(shortLinkCreateReqDTO));
         return JSON.parseObject(httpRequest.execute().body(),Result.class);
+    }
+
+
+    /**
+     *
+     * 通过HttpUtil发送Post的短链接组内短链接计数请求
+     */
+    default Result<List<ShortLinkCountQueryRespDTO>> countShortLinkByGroup(List<String> gidList){
+        Map<String, Object> requestMap = new HashMap<>(5);
+        requestMap.put("gidList", gidList);
+        String actualUrl = HttpUtil.get("http://127.0.0.1:8001/api/shortlink/project/v1/core/count", requestMap);
+        Type type = new TypeReference<Result<List<ShortLinkCountQueryRespDTO>>>() {
+        }.getType();
+        return JSON.parseObject(actualUrl, type);
     }
 
 }

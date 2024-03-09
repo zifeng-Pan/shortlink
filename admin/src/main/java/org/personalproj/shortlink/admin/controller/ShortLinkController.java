@@ -5,13 +5,13 @@ import lombok.AllArgsConstructor;
 import org.personalproj.shortlink.admin.remote.ShortLinkRemoteService;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
+import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
 import org.personalproj.shortlink.common.convention.result.Result;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @BelongsProject: shortlink
@@ -39,6 +39,13 @@ public class ShortLinkController {
     public Result<IPage<ShortLinkPageRespDTO>> page(@RequestBody ShortLinkPageReqDTO shortLinkPageReqDTO){
         return shortLinkRemoteService.pageShortLink(shortLinkPageReqDTO);
     }
+
+    @GetMapping("/count")
+    public Result<List<ShortLinkCountQueryRespDTO>> page(@RequestParam(value = "gidList") List<String> gidList){
+        return shortLinkRemoteService.countShortLinkByGroup(gidList);
+    }
+
+
 
 
 }
