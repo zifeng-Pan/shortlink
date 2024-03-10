@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.personalproj.shortlink.common.database.BaseDO;
 
 /**
  * @BelongsProject: shortlink
@@ -23,7 +22,7 @@ import org.personalproj.shortlink.common.database.BaseDO;
 @AllArgsConstructor
 @Builder
 @Data
-public class ShortLinkRouteDO extends BaseDO {
+public class ShortLinkRouteDO {
     /**
      *
      */
