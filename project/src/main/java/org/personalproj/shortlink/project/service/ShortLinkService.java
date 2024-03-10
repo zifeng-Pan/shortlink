@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
@@ -44,4 +45,32 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      * @return: org.personalproj.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO
      **/
     List<ShortLinkCountQueryRespDTO> shortLinkCountQuery(List<String> gidList);
+
+    /**
+     * @description: 根据前端发送的shortLinkUpdateReqDTO以及gid进行短链接地更新
+     * @author: PzF
+     * @date: 2024/3/9 21:42
+     * @param: [shortLinkUpdateReqDTO]
+     * @return: void
+     **/
+    void shortLinkUpdate(ShortLinkUpdateReqDTO shortLinkUpdateReqDTO);
+
+
+    /**
+     * @description: 根据oldGid,id进行短链接组修改
+     * @author: PzF
+     * @date: 2024/3/9 23:03
+     * @param: [oldGid,id, gid]
+     * @return: void
+     **/
+    void shortLinkChangeGroup(String oldGid, Long id, String gid);
+
+    /**
+     * @description:
+     * @author: PzF
+     * @date: 2024/3/10 0:06
+     * @param: [gid, id]
+     * @return: void
+     **/
+    void shortLinkDelete(String gid, Long id);
 }

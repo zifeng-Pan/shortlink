@@ -4,16 +4,19 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.personalproj.shortlink.common.convention.exception.ServerException;
+import org.personalproj.shortlink.project.common.enums.ValidDateType;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
@@ -26,10 +29,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.LOCK_SHORT_LINK_CREATE;
 
@@ -120,6 +128,65 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         return BeanUtil.copyToList(shortLinkCountMaps, ShortLinkCountQueryRespDTO.class);
     }
 
+    @Override
+    @Transactional(rollbackFor = {RuntimeException.class})
+    public void shortLinkUpdate(ShortLinkUpdateReqDTO shortLinkUpdateReqDTO) {
+        // 这里设置域名不能修改，否则短链接域名下唯一的规则很可能出现问题
+        LambdaUpdateWrapper<ShortLinkDO> updateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
+                .eq(ShortLinkDO::getGid, shortLinkUpdateReqDTO.getGid())
+                .eq(ShortLinkDO::getId, shortLinkUpdateReqDTO.getId())
+                .eq(ShortLinkDO::getDelFlag, "0")
+                .eq(ShortLinkDO::getEnableStatus, "0")
+                .set(Objects.equals(shortLinkUpdateReqDTO.getValidDateType(), ValidDateType.PERMANENT.getValidStatueCode()), ShortLinkDO::getValidDate, null);
+        shortLinkUpdateReqDTO.setGid(null);
+        shortLinkUpdateReqDTO.setId(null);
+        ShortLinkDO shortLinkDO = BeanUtil.toBean(shortLinkUpdateReqDTO, ShortLinkDO.class);
+        int updateSuccess = baseMapper.update(shortLinkDO, updateWrapper);
+        if(updateSuccess == -1){
+            throw new ServerException("短链接更新失败");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = {RuntimeException.class})
+    public void shortLinkChangeGroup(String oldGid, Long id, String gid) {
+        // TODO: 这里更新组别效率是非常低的，由于数据量比较大，我们进行了分表处理，此时的分片键是gid，
+        //  当我们要修改gid的时候，为了使得之后的查询效率不要变低，我们应该的做法是删除原数据，将gid修改后插入新表（因为很可能新的gid会分配到新表）
+        //  但是这种效率非常低，可以后期考虑使用消息队列来优化（异步操作）
+        LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
+                .eq(ShortLinkDO::getGid, oldGid)
+                .eq(ShortLinkDO::getId, id);
+        ShortLinkDO shortLinkDO = baseMapper.selectOne(queryWrapper);
+        shortLinkDO.setGid(gid);
+        // 获取当前时间
+        LocalDateTime currentTime = LocalDateTime.now();
+        // 转换为Date类型
+        Date currentDate = Date.from(currentTime.atZone(ZoneId.systemDefault()).toInstant());
+        // 设置更新日期
+        shortLinkDO.setUpdateTime(currentDate);
+        int deleteSuccess = baseMapper.delete(queryWrapper);
+        if(deleteSuccess == - 1){
+            throw new ServerException("短链接更换组别(删除旧数据)失败");
+        }
+        int insertSuccess = baseMapper.insert(shortLinkDO);
+        if(insertSuccess == -1){
+            throw new ServerException("短链接更换组别(插入新数据)失败");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = {RuntimeException.class})
+    public void shortLinkDelete(String gid, Long id) {
+        LambdaUpdateWrapper<ShortLinkDO> deleteWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
+                .eq(ShortLinkDO::getGid, gid)
+                .eq(ShortLinkDO::getId, id)
+                .set(ShortLinkDO::getDelFlag, 1);
+        int deleteSuccess = baseMapper.update(null, deleteWrapper);
+        if(deleteSuccess == -1){
+            throw new ServerException("短链接删除失败");
+        }
+    }
+
     private String generateSuffix(ShortLinkCreateReqDTO shortLinkCreateReqDTO){
         String originUrl = shortLinkCreateReqDTO.getOriginUrl();
         String shortUri;
@@ -141,7 +208,3 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         return shortUri;
     }
 }
-
-
-
-

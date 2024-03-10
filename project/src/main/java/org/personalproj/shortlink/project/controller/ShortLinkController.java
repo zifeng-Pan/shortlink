@@ -6,6 +6,7 @@ import org.personalproj.shortlink.common.convention.result.Result;
 import org.personalproj.shortlink.common.convention.result.Results;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
@@ -42,5 +43,23 @@ public class ShortLinkController {
     @GetMapping("/count")
     public Result<List<ShortLinkCountQueryRespDTO>> shortLinkCountQuery(@RequestParam(value = "gidList") List<String> gidList){
         return Results.success(shortLinkService.shortLinkCountQuery(gidList));
+    }
+
+    @PutMapping("/update")
+    public Result<Void> shortLinkUpdate(@RequestBody ShortLinkUpdateReqDTO shortLinkUpdateReqDTO){
+        shortLinkService.shortLinkUpdate(shortLinkUpdateReqDTO);
+        return Results.success();
+    }
+
+    @PutMapping("/change/group")
+    public Result<Void> shortLinkChangeGroup(@RequestParam("oldGid") String oldGid, @RequestParam("id") Long id, @RequestParam("gid") String gid){
+        shortLinkService.shortLinkChangeGroup(oldGid, id, gid);
+        return Results.success();
+    }
+
+    @DeleteMapping("/del")
+    public Result<Void> shortLinkDelete(@RequestParam("gid") String gid, @RequestParam("id") Long id){
+        shortLinkService.shortLinkDelete(gid,id);
+        return Results.success();
     }
 }
