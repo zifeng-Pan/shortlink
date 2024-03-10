@@ -13,7 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.personalproj.shortlink.common.convention.exception.ServerException;
 import org.personalproj.shortlink.project.common.enums.ValidDateType;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
+import org.personalproj.shortlink.project.dao.entity.ShortLinkRouteDO;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkMapper;
+import org.personalproj.shortlink.project.dao.mapper.ShortLinkRouteMapper;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
@@ -57,6 +59,8 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     private final PlatformTransactionManager transactionManager;
 
+    private final ShortLinkRouteMapper shortLinkRouteMapper;
+
     @Override
     public ShortLinkCreateRespDTO create(ShortLinkCreateReqDTO shortLinkCreateReqDTO) {
         // 事务控制数据库保存以及布隆过滤器的原子性
@@ -72,6 +76,11 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         shortLink.setShortUri(shortLinkSuffix);
         shortLink.setEnableStatus(0);
 
+        ShortLinkRouteDO shortLinkRouteDO = ShortLinkRouteDO.builder()
+                .gid(shortLink.getGid())
+                .fullShortUrl(shortLink.getFullShortUrl())
+                .build();
+
         // 通过锁来限制同时多个请求产生的并发问题（概率比较小），加锁的目的是在后端层面限制对于重复的完整短链接，只添加一次，减少和数据库交互
         RLock lock = redissonClient.getLock(LOCK_SHORT_LINK_CREATE + shortLink.getFullShortUrl());
 
@@ -81,6 +90,8 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
                 try {
                     save(shortLink);
+                    // gid与full_short_url路由关系表数据的插入
+                    shortLinkRouteMapper.insert(shortLinkRouteDO);
                     // 插入数据库成功之后，再对布隆过滤器进行设置
                     shortUriCreateCachePenetrationBloomFilter.add(fullShortUrl);
                     // 事务提交
@@ -150,21 +161,33 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
     @Override
     @Transactional(rollbackFor = {RuntimeException.class})
     public void shortLinkChangeGroup(String oldGid, Long id, String gid) {
+        // 更新Gid的时候同时更新短链接路由表(注意路由表的分片键是full_short_url),所以更新短链接路由表的时候不需要删除对应的数据,只更改gid
         // TODO: 这里更新组别效率是非常低的，由于数据量比较大，我们进行了分表处理，此时的分片键是gid，
         //  当我们要修改gid的时候，为了使得之后的查询效率不要变低，我们应该的做法是删除原数据，将gid修改后插入新表（因为很可能新的gid会分配到新表）
         //  但是这种效率非常低，可以后期考虑使用消息队列来优化（异步操作）
-        LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
+        LambdaQueryWrapper<ShortLinkDO> shortLinkQueryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
                 .eq(ShortLinkDO::getGid, oldGid)
                 .eq(ShortLinkDO::getId, id);
-        ShortLinkDO shortLinkDO = baseMapper.selectOne(queryWrapper);
+        ShortLinkDO shortLinkDO = baseMapper.selectOne(shortLinkQueryWrapper);
         shortLinkDO.setGid(gid);
+
+        LambdaUpdateWrapper<ShortLinkRouteDO> shortLinkRouteLambdaUpdateWrapper = Wrappers.lambdaUpdate(ShortLinkRouteDO.class)
+                .eq(ShortLinkRouteDO::getFullShortUrl, shortLinkDO.getFullShortUrl())
+                .set(ShortLinkRouteDO::getGid, gid);
+        // 路由表的更新
+        int shortLinkRouteUpdateSuccess = shortLinkRouteMapper.update(null, shortLinkRouteLambdaUpdateWrapper);
+        if(shortLinkRouteUpdateSuccess == -1){
+            throw new ServerException("短链接路由表更新失败");
+        }
+
         // 获取当前时间
         LocalDateTime currentTime = LocalDateTime.now();
         // 转换为Date类型
         Date currentDate = Date.from(currentTime.atZone(ZoneId.systemDefault()).toInstant());
         // 设置更新日期
         shortLinkDO.setUpdateTime(currentDate);
-        int deleteSuccess = baseMapper.delete(queryWrapper);
+        int deleteSuccess = baseMapper.delete(shortLinkQueryWrapper);
+
         if(deleteSuccess == - 1){
             throw new ServerException("短链接更换组别(删除旧数据)失败");
         }
@@ -177,6 +200,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
     @Override
     @Transactional(rollbackFor = {RuntimeException.class})
     public void shortLinkDelete(String gid, Long id) {
+        // 短链接删除,由于是逻辑删除，不更改路由表
         LambdaUpdateWrapper<ShortLinkDO> deleteWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
                 .eq(ShortLinkDO::getGid, gid)
                 .eq(ShortLinkDO::getId, id)
