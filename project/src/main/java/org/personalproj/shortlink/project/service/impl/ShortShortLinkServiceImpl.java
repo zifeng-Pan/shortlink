@@ -1,6 +1,7 @@
 package org.personalproj.shortlink.project.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.lang.UUID;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -8,8 +9,11 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.personalproj.shortlink.common.convention.exception.ClientException;
 import org.personalproj.shortlink.common.convention.exception.ServerException;
 import org.personalproj.shortlink.project.common.enums.ValidDateType;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
@@ -34,6 +38,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -60,6 +65,36 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
     private final PlatformTransactionManager transactionManager;
 
     private final ShortLinkRouteMapper shortLinkRouteMapper;
+
+    @Override
+    public void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+        // 对路由表设置的是fullShortUrl（全局唯一）与gid之间的映射，不直接fullShortUrl映射shortUri的原因是需要到短链接表中看是否删除以及是否启用,同时还需要看是否过期
+        String serverName = httpServletRequest.getServerName();
+        String fullShortUrl = serverName + "/" + shortUri;
+        LambdaQueryWrapper<ShortLinkRouteDO> shortLinkRouteLambdaQueryWrapper = Wrappers.lambdaQuery(ShortLinkRouteDO.class)
+                .eq(ShortLinkRouteDO::getFullShortUrl, fullShortUrl);
+        ShortLinkRouteDO shortLinkRouteDO = shortLinkRouteMapper.selectOne(shortLinkRouteLambdaQueryWrapper);
+        if(shortLinkRouteDO == null){
+            // TODO: 严格来说这里需要进行封控
+            return;
+        }
+        LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
+                .eq(ShortLinkDO::getGid, shortLinkRouteDO.getGid())
+                .eq(ShortLinkDO::getFullShortUrl, fullShortUrl)
+                .eq(ShortLinkDO::getDelFlag, 0)
+                .eq(ShortLinkDO::getEnableStatus, 0);
+        ShortLinkDO shortLinkDO = baseMapper.selectOne(queryWrapper);
+        if(shortLinkDO != null){
+            if(shortLinkDO.getValidDateType() == 1 && DateTime.now().isAfter(shortLinkDO.getValidDate())){
+                throw new ClientException("短链接已过期");
+            }
+            try {
+                httpServletResponse.sendRedirect(shortLinkDO.getOriginUrl());
+            } catch (IOException e) {
+                throw new ServerException("跳转原始连接失败");
+            }
+        }
+    }
 
     @Override
     public ShortLinkCreateRespDTO create(ShortLinkCreateReqDTO shortLinkCreateReqDTO) {
@@ -109,9 +144,11 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             lock.unlock();
         }
 
+        String protocol = shortLinkCreateReqDTO.getProtocol();
+        String returnFullShortUrl = (protocol == null ? shortLink.getFullShortUrl(): protocol + "//" + shortLink.getFullShortUrl());
         return ShortLinkCreateRespDTO
                 .builder()
-                .fullShortUrl(shortLink.getFullShortUrl())
+                .fullShortUrl(returnFullShortUrl)
                 .gid(shortLink.getGid())
                 .originUrl(shortLink.getOriginUrl())
                 .build();

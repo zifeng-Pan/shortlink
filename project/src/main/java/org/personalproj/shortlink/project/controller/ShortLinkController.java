@@ -1,6 +1,8 @@
 package org.personalproj.shortlink.project.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.common.convention.result.Result;
 import org.personalproj.shortlink.common.convention.result.Results;
@@ -29,7 +31,10 @@ public class ShortLinkController {
 
     private final ShortLinkService shortLinkService;
 
-    @RequestMapping()
+    @RequestMapping("/{short-uri}")
+    public void restoreUrl(@PathVariable("short-uri") String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse){
+        shortLinkService.restoreUrl(shortUri, httpServletRequest, httpServletResponse);
+    }
 
     @PostMapping("/api/shortlink/project/v1/core/create")
     public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO shortLinkCreateReqDTO){
