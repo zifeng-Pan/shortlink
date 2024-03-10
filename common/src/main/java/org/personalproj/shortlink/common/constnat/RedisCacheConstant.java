@@ -24,4 +24,11 @@ public class RedisCacheConstant {
 
     public static final TimeUnit USER_LOGIN_TIMEUNIT = TimeUnit.MINUTES;
 
+    /**
+     * 短链接跳转key
+     */
+    public static final String ROUTE_SHORT_LINK_KEY = "short_link_route_to_%s";
+
+    public static final String LOCK_ROUTE_SHORT_LINK_KEY = "lock_short_link_route_to_%s";
+
 }

@@ -3,6 +3,7 @@ package org.personalproj.shortlink.project.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -31,6 +32,7 @@ import org.personalproj.shortlink.project.toolkit.ShortLinkHashUtil;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -46,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.LOCK_SHORT_LINK_CREATE;
+import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.*;
 
 /**
 * @author panzifeng
@@ -66,33 +68,61 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     private final ShortLinkRouteMapper shortLinkRouteMapper;
 
+    private final StringRedisTemplate stringRedisTemplate;
+
     @Override
-    public void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    public void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws InterruptedException {
         // 对路由表设置的是fullShortUrl（全局唯一）与gid之间的映射，不直接fullShortUrl映射shortUri的原因是需要到短链接表中看是否删除以及是否启用,同时还需要看是否过期
         String serverName = httpServletRequest.getServerName();
         String fullShortUrl = serverName + "/" + shortUri;
-        LambdaQueryWrapper<ShortLinkRouteDO> shortLinkRouteLambdaQueryWrapper = Wrappers.lambdaQuery(ShortLinkRouteDO.class)
-                .eq(ShortLinkRouteDO::getFullShortUrl, fullShortUrl);
-        ShortLinkRouteDO shortLinkRouteDO = shortLinkRouteMapper.selectOne(shortLinkRouteLambdaQueryWrapper);
-        if(shortLinkRouteDO == null){
-            // TODO: 严格来说这里需要进行封控
-            return;
-        }
-        LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
-                .eq(ShortLinkDO::getGid, shortLinkRouteDO.getGid())
-                .eq(ShortLinkDO::getFullShortUrl, fullShortUrl)
-                .eq(ShortLinkDO::getDelFlag, 0)
-                .eq(ShortLinkDO::getEnableStatus, 0);
-        ShortLinkDO shortLinkDO = baseMapper.selectOne(queryWrapper);
-        if(shortLinkDO != null){
-            if(shortLinkDO.getValidDateType() == 1 && DateTime.now().isAfter(shortLinkDO.getValidDate())){
-                throw new ClientException("短链接已过期");
-            }
+        String originalLink = stringRedisTemplate.opsForValue().get(String.format(ROUTE_SHORT_LINK_KEY, fullShortUrl));
+        // 如果为空，可能缓存失效或者现在没有对应的缓存数据，可能存在缓存击穿或者缓存穿透的问题
+        if(StrUtil.isNotBlank(originalLink)){
             try {
-                httpServletResponse.sendRedirect(shortLinkDO.getOriginUrl());
+                httpServletResponse.sendRedirect(originalLink);
+                return;
             } catch (IOException e) {
-                throw new ServerException("跳转原始连接失败");
+                throw new ClientException("短链接跳转失败");
             }
+        }
+        RLock lock = redissonClient.getLock(String.format(LOCK_ROUTE_SHORT_LINK_KEY, fullShortUrl));
+        if(lock.tryLock()) {
+            try {
+                // 双重判定锁
+                originalLink = stringRedisTemplate.opsForValue().get(String.format(ROUTE_SHORT_LINK_KEY, fullShortUrl));
+                if (StrUtil.isNotBlank(originalLink)) {
+                    httpServletResponse.sendRedirect(originalLink);
+                    return;
+                }
+                LambdaQueryWrapper<ShortLinkRouteDO> shortLinkRouteLambdaQueryWrapper = Wrappers.lambdaQuery(ShortLinkRouteDO.class)
+                        .eq(ShortLinkRouteDO::getFullShortUrl, fullShortUrl);
+                ShortLinkRouteDO shortLinkRouteDO = shortLinkRouteMapper.selectOne(shortLinkRouteLambdaQueryWrapper);
+                if (shortLinkRouteDO == null) {
+                    // TODO: 严格来说这里需要进行封控
+                    return;
+                }
+                LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
+                        .eq(ShortLinkDO::getGid, shortLinkRouteDO.getGid())
+                        .eq(ShortLinkDO::getFullShortUrl, fullShortUrl)
+                        .eq(ShortLinkDO::getDelFlag, 0)
+                        .eq(ShortLinkDO::getEnableStatus, 0);
+                ShortLinkDO shortLinkDO = baseMapper.selectOne(queryWrapper);
+                if (shortLinkDO != null) {
+                    if (shortLinkDO.getValidDateType() == 1 && DateTime.now().isAfter(shortLinkDO.getValidDate())) {
+                        throw new ClientException("短链接已过期");
+                    }
+                    stringRedisTemplate.opsForValue().set(String.format(ROUTE_SHORT_LINK_KEY, fullShortUrl), shortLinkDO.getOriginUrl());
+                    httpServletResponse.sendRedirect(shortLinkDO.getOriginUrl());
+                }
+            } catch (IOException e) {
+                throw new ClientException("短链接跳转失败");
+            } finally {
+                lock.unlock();
+            }
+        } else{
+            // 多线程情况下，等待获取锁期间休眠一段时间后重试
+            Thread.sleep(50);
+            restoreUrl(shortUri,httpServletRequest,httpServletResponse);
         }
     }
 

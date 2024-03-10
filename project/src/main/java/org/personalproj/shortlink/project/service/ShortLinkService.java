@@ -83,5 +83,5 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      * @param: [shortUri：短链接后缀, httpServletRequest：Http请求, httpServletResponse：Http响应]
      * @return: void
      **/
-    void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse);
+    void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws InterruptedException;
 }
