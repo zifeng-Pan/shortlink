@@ -2,11 +2,13 @@ package org.personalproj.shortlink.admin.remote;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.http.Method;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
+import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkUpdateReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
@@ -47,15 +49,38 @@ public interface ShortLinkRemoteService {
 
     /**
      *
-     * 通过HttpUtil发送Post的短链接组内短链接计数请求
+     * 通过HttpUtil发送Get的短链接组内短链接计数请求
      */
     default Result<List<ShortLinkCountQueryRespDTO>> countShortLinkByGroup(List<String> gidList){
         Map<String, Object> requestMap = new HashMap<>(5);
         requestMap.put("gidList", gidList);
-        String actualUrl = HttpUtil.get("http://127.0.0.1:8001/api/shortlink/project/v1/core/count", requestMap);
+        String returnUrl = HttpUtil.get("http://127.0.0.1:8001/api/shortlink/project/v1/core/count", requestMap);
         Type type = new TypeReference<Result<List<ShortLinkCountQueryRespDTO>>>() {
         }.getType();
-        return JSON.parseObject(actualUrl, type);
+        return JSON.parseObject(returnUrl, type);
     }
 
+    default Result<Void> shortLinkUpdate(ShortLinkUpdateReqDTO shortLinkUpdateReqDTO){
+        String requestUrl = "http://127.0.0.1:8001/api/shortlink/project/v1/core/update";
+        HttpRequest putReq = HttpUtil.createRequest(Method.PUT, requestUrl);
+        putReq.body(JSON.toJSONString(shortLinkUpdateReqDTO));
+        return JSON.parseObject(putReq.execute().body(),Result.class);
+    }
+
+    default Result<Void> shortLinkChangeGroup(String oldGid, Long id, String gid){
+        String requestUrl = "http://127.0.0.1:8001/api/shortlink/project/v1/core/change/group";
+        HttpRequest putReq = HttpUtil.createRequest(Method.PUT, requestUrl);
+        putReq.form("oldGid",oldGid);
+        putReq.form("id",id);
+        putReq.form("gid",gid);
+        return JSON.parseObject(putReq.execute().body(),Result.class);
+    }
+
+    default Result<Void> shortLinkDelete(String gid, Long id){
+        String requestUrl = "http://127.0.0.1:8001/api/shortlink/project/v1/core/del";
+        HttpRequest putReq = HttpUtil.createRequest(Method.DELETE, requestUrl);
+        putReq.form("gid",gid);
+        putReq.form("id",id);
+        return JSON.parseObject(putReq.execute().body(),Result.class);
+    }
 }

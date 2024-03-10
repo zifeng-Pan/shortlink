@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import org.personalproj.shortlink.admin.remote.ShortLinkRemoteService;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
+import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkUpdateReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
@@ -54,5 +55,20 @@ public class ShortLinkController {
                     shortLinkCountQueryRespMap.put(shortLinkCountQueryRespDTO.getGid(),shortLinkCountQueryRespDTO.getShortLinkCount());
                 });
         return Results.success(shortLinkCountQueryRespMap);
+    }
+
+    @PutMapping("/update")
+    public Result<Void> shortLinkUpdate(@RequestBody ShortLinkUpdateReqDTO shortLinkUpdateReqDTO){
+        return shortLinkRemoteService.shortLinkUpdate(shortLinkUpdateReqDTO);
+    }
+
+    @PutMapping("/change/group")
+    public Result<Void> shortLinkChangeGroup(@RequestParam("oldGid") String oldGid, @RequestParam("id") Long id, @RequestParam("gid") String gid){
+        return shortLinkRemoteService.shortLinkChangeGroup(oldGid, id, gid);
+    }
+
+    @DeleteMapping("/del")
+    public Result<Void> shortLinkDelete(@RequestParam("gid") String gid, @RequestParam("id") Long id){
+        return shortLinkRemoteService.shortLinkDelete(gid,id);
     }
 }
