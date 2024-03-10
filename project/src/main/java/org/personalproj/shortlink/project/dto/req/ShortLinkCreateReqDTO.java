@@ -17,6 +17,12 @@ import java.util.Date;
 public class ShortLinkCreateReqDTO {
 
     /**
+     *
+     * 域名协议
+     */
+    private String protocol;
+
+    /**
      * 所属短链接组的gid
      */
     private String gid;
