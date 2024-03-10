@@ -24,40 +24,41 @@ import java.util.List;
  * @Version: 1.0
  */
 @RestController
-@RequestMapping("/api/shortlink/project/v1/core")
 @RequiredArgsConstructor
 public class ShortLinkController {
 
     private final ShortLinkService shortLinkService;
 
-    @PostMapping("/create")
+    @RequestMapping()
+
+    @PostMapping("/api/shortlink/project/v1/core/create")
     public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO shortLinkCreateReqDTO){
         return Results.success(shortLinkService.create(shortLinkCreateReqDTO));
     }
 
-    @PostMapping("/page")
+    @PostMapping("/api/shortlink/project/v1/core/page")
     public Result<IPage<ShortLinkPageRespDTO>> shortLinkPageQuery(@RequestBody ShortLinkPageReqDTO shortLinkPageReqDTO){
         return Results.success(shortLinkService.pageQuery(shortLinkPageReqDTO));
     }
 
-    @GetMapping("/count")
+    @GetMapping("/api/shortlink/project/v1/core/count")
     public Result<List<ShortLinkCountQueryRespDTO>> shortLinkCountQuery(@RequestParam(value = "gidList") List<String> gidList){
         return Results.success(shortLinkService.shortLinkCountQuery(gidList));
     }
 
-    @PutMapping("/update")
+    @PutMapping("/api/shortlink/project/v1/core/update")
     public Result<Void> shortLinkUpdate(@RequestBody ShortLinkUpdateReqDTO shortLinkUpdateReqDTO){
         shortLinkService.shortLinkUpdate(shortLinkUpdateReqDTO);
         return Results.success();
     }
 
-    @PutMapping("/change/group")
+    @PutMapping("/api/shortlink/project/v1/core/change/group")
     public Result<Void> shortLinkChangeGroup(@RequestParam("oldGid") String oldGid, @RequestParam("id") Long id, @RequestParam("gid") String gid){
         shortLinkService.shortLinkChangeGroup(oldGid, id, gid);
         return Results.success();
     }
 
-    @DeleteMapping("/del")
+    @DeleteMapping("/api/shortlink/project/v1/core/del")
     public Result<Void> shortLinkDelete(@RequestParam("gid") String gid, @RequestParam("id") Long id){
         shortLinkService.shortLinkDelete(gid,id);
         return Results.success();

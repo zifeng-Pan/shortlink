@@ -28,23 +28,22 @@ import java.util.Map;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/shortlink/admin/v1/core")
 public class ShortLinkController {
 
     private final ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
     };
 
-    @PostMapping("/create")
+    @PostMapping("/api/shortlink/admin/v1/core/create")
     public Result<ShortLinkCreateRespDTO> create(@RequestBody ShortLinkCreateReqDTO shortLinkCreateReqDTO){
         return shortLinkRemoteService.createShortLink(shortLinkCreateReqDTO);
     }
 
-    @PostMapping("/page")
+    @PostMapping("/api/shortlink/admin/v1/core/page")
     public Result<IPage<ShortLinkPageRespDTO>> page(@RequestBody ShortLinkPageReqDTO shortLinkPageReqDTO){
         return shortLinkRemoteService.pageShortLink(shortLinkPageReqDTO);
     }
 
-    @GetMapping("/count")
+    @GetMapping("/api/shortlink/admin/v1/core/count")
     public Result<Map<String,Integer>> page(@RequestParam(value = "gidList") List<String> gidList){
         Result<List<ShortLinkCountQueryRespDTO>> listResult = shortLinkRemoteService.countShortLinkByGroup(gidList);
         List<ShortLinkCountQueryRespDTO> shortLinkCountQueryRespDTOList = listResult.getData();
@@ -57,17 +56,17 @@ public class ShortLinkController {
         return Results.success(shortLinkCountQueryRespMap);
     }
 
-    @PutMapping("/update")
+    @PutMapping("/api/shortlink/admin/v1/core/update")
     public Result<Void> shortLinkUpdate(@RequestBody ShortLinkUpdateReqDTO shortLinkUpdateReqDTO){
         return shortLinkRemoteService.shortLinkUpdate(shortLinkUpdateReqDTO);
     }
 
-    @PutMapping("/change/group")
+    @PutMapping("/api/shortlink/admin/v1/core/change/group")
     public Result<Void> shortLinkChangeGroup(@RequestParam("oldGid") String oldGid, @RequestParam("id") Long id, @RequestParam("gid") String gid){
         return shortLinkRemoteService.shortLinkChangeGroup(oldGid, id, gid);
     }
 
-    @DeleteMapping("/del")
+    @DeleteMapping("/api/shortlink/admin/v1/core/del")
     public Result<Void> shortLinkDelete(@RequestParam("gid") String gid, @RequestParam("id") Long id){
         return shortLinkRemoteService.shortLinkDelete(gid,id);
     }
