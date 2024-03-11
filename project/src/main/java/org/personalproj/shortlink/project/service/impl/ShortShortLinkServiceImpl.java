@@ -260,7 +260,6 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 .eq(ShortLinkDO::getGid, shortLinkUpdateReqDTO.getGid())
                 .eq(ShortLinkDO::getId, shortLinkUpdateReqDTO.getId())
                 .eq(ShortLinkDO::getDelFlag, "0")
-                .eq(ShortLinkDO::getEnableStatus, "0")
                 .set(Objects.equals(shortLinkUpdateReqDTO.getValidDateType(), ValidDateType.PERMANENT.getValidStatueCode()), ShortLinkDO::getValidDate, null);
         shortLinkUpdateReqDTO.setGid(null);
         shortLinkUpdateReqDTO.setId(null);
@@ -280,7 +279,8 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         //  但是这种效率非常低，可以后期考虑使用消息队列来优化（异步操作）
         LambdaQueryWrapper<ShortLinkDO> shortLinkQueryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
                 .eq(ShortLinkDO::getGid, oldGid)
-                .eq(ShortLinkDO::getId, id);
+                .eq(ShortLinkDO::getId, id)
+                .eq(ShortLinkDO::getDelFlag,1);
         ShortLinkDO shortLinkDO = baseMapper.selectOne(shortLinkQueryWrapper);
         shortLinkDO.setGid(gid);
 

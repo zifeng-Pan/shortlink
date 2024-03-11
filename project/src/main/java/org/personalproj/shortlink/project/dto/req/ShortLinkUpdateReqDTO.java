@@ -40,6 +40,12 @@ public class ShortLinkUpdateReqDTO {
     private String originUrl;
 
     /**
+     *
+     * 短链接启用标识
+     */
+    private Integer enableStatus;
+
+    /**
      * 有效期类型 0：永久有效， 1：自定义有效期时间
      */
     private Integer validDateType;
