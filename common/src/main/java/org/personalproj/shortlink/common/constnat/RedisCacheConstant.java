@@ -29,6 +29,16 @@ public class RedisCacheConstant {
      */
     public static final String ROUTE_SHORT_LINK_KEY = "short_link_route_to_%s";
 
+    /**
+     *
+     * 短链接路由锁，目的是在缓存不存在full_short_url对应的origin_url时，限制一个线程去查询数据库并保存在缓存中，减少数据库操作
+     */
     public static final String LOCK_ROUTE_SHORT_LINK_KEY = "lock_short_link_route_to_%s";
+
+    /**
+     *
+     * 短链接跳转空值key
+     */
+    public static final String ROUTE_SHORT_LINK_NULL_KEY = "short_link_route_null_to_%s";
 
 }
