@@ -83,4 +83,11 @@ public interface ShortLinkRemoteService {
         putReq.form("id",id);
         return JSON.parseObject(putReq.execute().body(),Result.class);
     }
+
+    default Result<String> getTitleByUrl(String url){
+        String responseContent = HttpUtil.get("http://127.0.0.1:8001/api/shortlink/v1/title?url=" + url);
+        Type type = new TypeReference<Result<String>>() {
+        }.getType();
+        return JSON.parseObject(responseContent, type);
+    };
 }
