@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.common.convention.result.Result;
 import org.personalproj.shortlink.common.convention.result.Results;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinRecoverReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleReqDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkRecycleBinPageRespDTO;
 import org.personalproj.shortlink.project.service.RecycleBinService;
@@ -44,6 +45,12 @@ public class RecycleBinController {
     @GetMapping("/page")
     public Result<IPage<ShortLinkRecycleBinPageRespDTO>> pageQuery(@RequestBody ShortLinkRecycleBinPageReqDTO shortLinkRecycleBinPageReqDTO){
         return Results.success(recycleBinService.pageQuery(shortLinkRecycleBinPageReqDTO));
+    }
+
+    @PutMapping("/recover")
+    public Result<Void> recover(@RequestBody ShortLinkRecycleBinRecoverReqDTO shortLinkRecycleBinRecoverReqDTO){
+        recycleBinService.recover(shortLinkRecycleBinRecoverReqDTO);
+        return Results.success();
     }
 
 }

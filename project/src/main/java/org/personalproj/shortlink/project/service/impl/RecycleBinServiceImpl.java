@@ -12,6 +12,7 @@ import org.personalproj.shortlink.common.convention.exception.ServerException;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinRecoverReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleReqDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkRecycleBinPageRespDTO;
 import org.personalproj.shortlink.project.service.RecycleBinService;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.ROUTE_SHORT_LINK_KEY;
+import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.ROUTE_SHORT_LINK_NULL_KEY;
 
 /**
  * @BelongsProject: shortlink
@@ -60,5 +62,19 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
                 .orderByDesc(ShortLinkDO::getCreateTime);
         IPage<ShortLinkDO> resultPage =  baseMapper.selectPage(shortLinkRecycleBinPageReqDTO, queryWrapper);
         return resultPage.convert(row -> BeanUtil.toBean(row, ShortLinkRecycleBinPageRespDTO.class));
+    }
+
+    @Override
+    public void recover(ShortLinkRecycleBinRecoverReqDTO shortLinkRecycleBinRecoverReqDTO) {
+        LambdaUpdateWrapper<ShortLinkDO> recoverWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
+                .eq(ShortLinkDO::getGid, shortLinkRecycleBinRecoverReqDTO.getGid())
+                .eq(ShortLinkDO::getFullShortUrl, shortLinkRecycleBinRecoverReqDTO.getFullShortUrl())
+                .eq(ShortLinkDO::getDelFlag,1)
+                .set(ShortLinkDO::getDelFlag, 0);
+        int recoverSuccess = baseMapper.update(null, recoverWrapper);
+        if(recoverSuccess == -1){
+            throw new ServerException("短链接恢复失败");
+        }
+        stringRedisTemplate.delete(String.format(ROUTE_SHORT_LINK_NULL_KEY, shortLinkRecycleBinRecoverReqDTO.getFullShortUrl()));;
     }
 }

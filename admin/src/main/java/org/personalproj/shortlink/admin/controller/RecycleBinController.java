@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.admin.dto.resp.GroupRespDTO;
 import org.personalproj.shortlink.admin.remote.RecycleBinRemoteService;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkRecycleBinPageReqDTO;
+import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkRecycleBinRecoverReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkRecycleReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkRecycleBinPageRespDTO;
 import org.personalproj.shortlink.admin.service.GroupService;
@@ -51,5 +52,10 @@ public class RecycleBinController {
         groups.forEach(groupRespDTO -> gidList.add(groupRespDTO.getGid()));
         shortLinkRecycleBinPageReqDTO.setGidList(gidList);
         return recycleBinRemoteService.pageQuery(shortLinkRecycleBinPageReqDTO);
+    }
+
+    @PutMapping("/recover")
+    public Result<Void> recover(@RequestBody ShortLinkRecycleBinRecoverReqDTO shortLinkRecycleBinRecoverReqDTO){
+        return recycleBinRemoteService.recover(shortLinkRecycleBinRecoverReqDTO);
     }
 }
