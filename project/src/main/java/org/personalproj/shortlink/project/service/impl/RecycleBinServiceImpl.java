@@ -10,15 +10,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.personalproj.shortlink.common.convention.exception.ServerException;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
+import org.personalproj.shortlink.project.dao.entity.ShortLinkRouteDO;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkMapper;
+import org.personalproj.shortlink.project.dao.mapper.ShortLinkRouteMapper;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinRecoverReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinRemoveReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleReqDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkRecycleBinPageRespDTO;
 import org.personalproj.shortlink.project.service.RecycleBinService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.ROUTE_SHORT_LINK_KEY;
 import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.ROUTE_SHORT_LINK_NULL_KEY;
@@ -38,6 +43,8 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
 
     private final StringRedisTemplate stringRedisTemplate;
 
+    private final ShortLinkRouteMapper shortLinkRouteMapper;
+
     @Override
     @Transactional(rollbackFor = {RuntimeException.class})
     public void shortLinkRecycle(ShortLinkRecycleReqDTO shortLinkRecycleReqDTO) {
@@ -51,6 +58,7 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
         if(deleteSuccess == -1){
             throw new ServerException("短链接回收失败");
         }
+        stringRedisTemplate.opsForValue().set(String.format(ROUTE_SHORT_LINK_NULL_KEY, shortLinkRecycleReqDTO.getFullShortUrl()),"-", 30, TimeUnit.SECONDS);
         stringRedisTemplate.delete(String.format(ROUTE_SHORT_LINK_KEY, shortLinkRecycleReqDTO.getFullShortUrl()));
     }
 
@@ -65,6 +73,7 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
     }
 
     @Override
+    @Transactional(rollbackFor = {RuntimeException.class})
     public void recover(ShortLinkRecycleBinRecoverReqDTO shortLinkRecycleBinRecoverReqDTO) {
         LambdaUpdateWrapper<ShortLinkDO> recoverWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
                 .eq(ShortLinkDO::getGid, shortLinkRecycleBinRecoverReqDTO.getGid())
@@ -76,5 +85,24 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
             throw new ServerException("短链接恢复失败");
         }
         stringRedisTemplate.delete(String.format(ROUTE_SHORT_LINK_NULL_KEY, shortLinkRecycleBinRecoverReqDTO.getFullShortUrl()));;
+    }
+
+    @Override
+    @Transactional(rollbackFor = {RuntimeException.class})
+    public void shortLinkRemove(ShortLinkRecycleBinRemoveReqDTO shortLinkRecycleBinRemoveReqDTO) {
+        LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
+                .eq(ShortLinkDO::getGid, shortLinkRecycleBinRemoveReqDTO.getGid())
+                .eq(ShortLinkDO::getFullShortUrl, shortLinkRecycleBinRemoveReqDTO.getFullShortUrl())
+                .eq(ShortLinkDO::getDelFlag,1);
+
+        LambdaQueryWrapper<ShortLinkRouteDO> shortLinkRouteQueryWrapper = Wrappers.lambdaQuery(ShortLinkRouteDO.class)
+                .eq(ShortLinkRouteDO::getGid, shortLinkRecycleBinRemoveReqDTO.getGid())
+                .eq(ShortLinkRouteDO::getFullShortUrl, shortLinkRecycleBinRemoveReqDTO.getFullShortUrl());
+
+        int shortLinkRemoveSuccess = baseMapper.delete(queryWrapper);
+        int shortLinkRouteRemoveSuccess = shortLinkRouteMapper.delete(shortLinkRouteQueryWrapper);
+        if(shortLinkRouteRemoveSuccess == -1 || shortLinkRemoveSuccess == -1){
+            throw new ServerException("服务端彻底移除短链接失败");
+        }
     }
 }

@@ -6,6 +6,7 @@ import org.personalproj.shortlink.common.convention.result.Result;
 import org.personalproj.shortlink.common.convention.result.Results;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinRecoverReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinRemoveReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleReqDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkRecycleBinPageRespDTO;
 import org.personalproj.shortlink.project.service.RecycleBinService;
@@ -50,6 +51,12 @@ public class RecycleBinController {
     @PutMapping("/recover")
     public Result<Void> recover(@RequestBody ShortLinkRecycleBinRecoverReqDTO shortLinkRecycleBinRecoverReqDTO){
         recycleBinService.recover(shortLinkRecycleBinRecoverReqDTO);
+        return Results.success();
+    }
+
+    @PostMapping("/remove")
+    public Result<Void> remove(@RequestBody ShortLinkRecycleBinRemoveReqDTO shortLinkRecycleBinRemoveReqDTO){
+        recycleBinService.shortLinkRemove(shortLinkRecycleBinRemoveReqDTO);
         return Results.success();
     }
 

@@ -10,6 +10,7 @@ import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkRecycleBinRecoverReqDTO;
+import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkRecycleBinRemoveReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkRecycleReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkRecycleBinPageRespDTO;
 import org.personalproj.shortlink.common.convention.result.Result;
@@ -51,5 +52,10 @@ public interface RecycleBinRemoteService {
         HttpRequest putReq = HttpUtil.createRequest(Method.PUT, requestUrl);
         putReq.body(JSON.toJSONString(shortLinkRecycleBinRecoverReqDTO));
         return JSON.parseObject(putReq.execute().body(),Result.class);
+    };
+
+    default Result<Void> remove(ShortLinkRecycleBinRemoveReqDTO shortLinkRecycleBinRemoveReqDTO){
+        HttpRequest httpRequest = HttpUtil.createPost("http://127.0.0.1:8001/api/shortlink/project/v1/core/recycle-bin/remove").body(JSON.toJSONString(shortLinkRecycleBinRemoveReqDTO));
+        return JSON.parseObject(httpRequest.execute().body(), Result.class);
     };
 }
