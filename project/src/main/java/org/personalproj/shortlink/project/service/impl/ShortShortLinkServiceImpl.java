@@ -132,6 +132,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                     if (shortLinkDO.getValidDateType() == 1){
                         Date validDate = shortLinkDO.getValidDate();
                         if(DateTime.now().isAfter(validDate)) {
+                            stringRedisTemplate.opsForValue().set(String.format(ROUTE_SHORT_LINK_NULL_KEY, fullShortUrl),"-", 30, TimeUnit.SECONDS);
                             httpServletResponse.sendRedirect("/page/notfound");
                             throw new ClientException("短链接已过期");
                         }
