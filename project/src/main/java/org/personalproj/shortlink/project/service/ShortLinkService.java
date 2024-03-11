@@ -12,6 +12,7 @@ import org.personalproj.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -83,5 +84,5 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      * @param: [shortUri：短链接后缀, httpServletRequest：Http请求, httpServletResponse：Http响应]
      * @return: void
      **/
-    void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws InterruptedException;
+    void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws InterruptedException, IOException;
 }

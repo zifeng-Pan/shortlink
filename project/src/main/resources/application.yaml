@@ -19,3 +19,7 @@ spring:
           min-idle: 1
           max-wait: 100ms
           time-between-eviction-runs: 10s
+  mvc:
+    view:
+      prefix: /templates/
+      suffix: .html

@@ -71,7 +71,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
     private final StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws InterruptedException {
+    public void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws InterruptedException, IOException {
         // 对路由表设置的是fullShortUrl（全局唯一）与gid之间的映射，不直接fullShortUrl映射shortUri的原因是需要到短链接表中看是否删除以及是否启用,同时还需要看是否过期
         String serverName = httpServletRequest.getServerName();
         String fullShortUrl = serverName + "/" + shortUri;
@@ -88,11 +88,13 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         // redis不存在full_short_url这个key的时候，解决缓存穿透[缓存中没有对应的缓存数据，如果是缓存失效的话，布隆过滤器中还是存在的]的问题
         // 1. 检查布隆过滤器中是否存在full_short_url,如果不存在直接返回空
         if(!shortUriCreateCachePenetrationBloomFilter.contains(fullShortUrl)){
+            httpServletResponse.sendRedirect("/page/notfound");
             throw new ClientException("短链接未创建");
         }
         // 2. 判定为存在的情况，检查redis缓存是否存储了对应的空值，如果有的话直接返回空
         String nullCacheValue = stringRedisTemplate.opsForValue().get(String.format(ROUTE_SHORT_LINK_NULL_KEY, fullShortUrl));
         if(StrUtil.isNotBlank(nullCacheValue)){
+            httpServletResponse.sendRedirect("/page/notfound");
             throw new ClientException("短链接未创建");
         }
         // 3. 空值key不存在于缓存中的话，加锁查询数据库，数据库中查询不到的时候，将空值key插入redis中
@@ -111,6 +113,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 if (shortLinkRouteDO == null) {
                     // TODO: 严格来说这里需要进行风控
                     stringRedisTemplate.opsForValue().set(String.format(ROUTE_SHORT_LINK_NULL_KEY, fullShortUrl),"-", 30, TimeUnit.SECONDS);
+                    httpServletResponse.sendRedirect("/page/notfound");
                     return;
                 }
                 LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
@@ -123,6 +126,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                     if (shortLinkDO.getValidDateType() == 1){
                         Date validDate = shortLinkDO.getValidDate();
                         if(DateTime.now().isAfter(validDate)) {
+                            httpServletResponse.sendRedirect("/page/notfound");
                             throw new ClientException("短链接已过期");
                         }
                         stringRedisTemplate.opsForValue().set(
