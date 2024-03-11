@@ -41,4 +41,10 @@ public class RedisCacheConstant {
      */
     public static final String ROUTE_SHORT_LINK_NULL_KEY = "short_link_route_null_to_%s";
 
+    /**
+     *
+     * 永久短链接默认有效期时间
+     */
+    public static final long DEFAULT_SHORT_LINK_CACHE_VALID_TIME = 2629800000L;
+
 }

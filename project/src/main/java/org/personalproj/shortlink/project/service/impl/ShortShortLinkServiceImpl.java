@@ -2,6 +2,8 @@ package org.personalproj.shortlink.project.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -43,10 +45,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.*;
@@ -126,11 +125,19 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                         if(DateTime.now().isAfter(validDate)) {
                             throw new ClientException("短链接已过期");
                         }
-                        Date now = new Date();
-                        long time = validDate.getTime() - now.getTime();
-                        stringRedisTemplate.opsForValue().set(String.format(ROUTE_SHORT_LINK_KEY, fullShortUrl), shortLinkDO.getOriginUrl(),time, TimeUnit.MICROSECONDS);
+                        stringRedisTemplate.opsForValue().set(
+                                String.format(ROUTE_SHORT_LINK_KEY, fullShortUrl),
+                                shortLinkDO.getOriginUrl(),
+                                getShortLinkCacheValidTime(validDate),
+                                TimeUnit.MILLISECONDS
+                        );
                     } else {
-                        stringRedisTemplate.opsForValue().set(String.format(ROUTE_SHORT_LINK_KEY, fullShortUrl), shortLinkDO.getOriginUrl());
+                        stringRedisTemplate.opsForValue().set(
+                                String.format(ROUTE_SHORT_LINK_KEY, fullShortUrl),
+                                shortLinkDO.getOriginUrl(),
+                                getShortLinkCacheValidTime(null),
+                                TimeUnit.MILLISECONDS
+                        );
                     }
                     httpServletResponse.sendRedirect(shortLinkDO.getOriginUrl());
                 }
@@ -179,6 +186,13 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                     shortLinkRouteMapper.insert(shortLinkRouteDO);
                     // 插入数据库成功之后，再对布隆过滤器进行设置
                     shortUriCreateCachePenetrationBloomFilter.add(fullShortUrl);
+                    // 缓存预热
+                    stringRedisTemplate.opsForValue().set(
+                                String.format(ROUTE_SHORT_LINK_KEY,shortLinkRouteDO.getFullShortUrl()),
+                                shortLink.getOriginUrl(),
+                                getShortLinkCacheValidTime(shortLinkCreateReqDTO.getValidDate()),
+                                TimeUnit.MILLISECONDS
+                            );
                     // 事务提交
                     transactionManager.commit(transactionStatus);
                 } catch (Exception e){
@@ -196,6 +210,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
         String protocol = shortLinkCreateReqDTO.getProtocol();
         String returnFullShortUrl = (protocol == null ? shortLink.getFullShortUrl(): protocol + "//" + shortLink.getFullShortUrl());
+
         return ShortLinkCreateRespDTO
                 .builder()
                 .fullShortUrl(returnFullShortUrl)
@@ -317,5 +332,11 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             generateRetryCount++;
         }
         return shortUri;
+    }
+
+    private long getShortLinkCacheValidTime(Date validDate){
+        return Optional.ofNullable(validDate)
+                .map(time -> DateUtil.between(new Date(), time, DateUnit.MS))
+                .orElse(DEFAULT_SHORT_LINK_CACHE_VALID_TIME);
     }
 }
