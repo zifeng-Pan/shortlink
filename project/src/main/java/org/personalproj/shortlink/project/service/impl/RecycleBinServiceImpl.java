@@ -1,6 +1,9 @@
 package org.personalproj.shortlink.project.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.personalproj.shortlink.common.convention.exception.ServerException;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkMapper;
+import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleReqDTO;
+import org.personalproj.shortlink.project.dto.resp.ShortLinkRecycleBinPageRespDTO;
 import org.personalproj.shortlink.project.service.RecycleBinService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -45,5 +50,15 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
             throw new ServerException("短链接回收失败");
         }
         stringRedisTemplate.delete(String.format(ROUTE_SHORT_LINK_KEY, shortLinkRecycleReqDTO.getFullShortUrl()));
+    }
+
+    @Override
+    public IPage<ShortLinkRecycleBinPageRespDTO> pageQuery(ShortLinkRecycleBinPageReqDTO shortLinkRecycleBinPageReqDTO) {
+        LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
+                .in(ShortLinkDO::getGid,shortLinkRecycleBinPageReqDTO.getGidList())
+                .eq(ShortLinkDO::getDelFlag, 1)
+                .orderByDesc(ShortLinkDO::getCreateTime);
+        IPage<ShortLinkDO> resultPage =  baseMapper.selectPage(shortLinkRecycleBinPageReqDTO, queryWrapper);
+        return resultPage.convert(row -> BeanUtil.toBean(row, ShortLinkRecycleBinPageRespDTO.class));
     }
 }

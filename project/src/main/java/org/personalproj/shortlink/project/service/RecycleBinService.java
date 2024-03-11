@@ -1,8 +1,11 @@
 package org.personalproj.shortlink.project.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkRecycleReqDTO;
+import org.personalproj.shortlink.project.dto.resp.ShortLinkRecycleBinPageRespDTO;
 
 /**
  *
@@ -18,4 +21,14 @@ public interface RecycleBinService extends IService<ShortLinkDO> {
      * @return: void
      **/
     void shortLinkRecycle(ShortLinkRecycleReqDTO shortLinkRecycleReqDTO);
+
+
+    /**
+     * @description: 根据分组标识查询到某一分组下面的短链接，并分页返回
+     * @author: PzF
+     * @date: 2024/3/11 14:39
+     * @param: [shortLinkRecycleBinPageReqDTO]
+     * @return: com.baomidou.mybatisplus.core.metadata.IPage<org.personalproj.shortlink.project.dto.resp.ShortLinkRecycleBinPageRespDTO>
+     **/
+    IPage<ShortLinkRecycleBinPageRespDTO> pageQuery(ShortLinkRecycleBinPageReqDTO shortLinkRecycleBinPageReqDTO);
 }

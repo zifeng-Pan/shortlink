@@ -15,6 +15,7 @@ import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.personalproj.shortlink.project.service.ShortLinkService;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -32,7 +33,7 @@ public class ShortLinkController {
     private final ShortLinkService shortLinkService;
 
     @RequestMapping("/{short-uri}")
-    public void restoreUrl(@PathVariable("short-uri") String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse){
+    public void restoreUrl(@PathVariable("short-uri") String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, InterruptedException {
         shortLinkService.restoreUrl(shortUri, httpServletRequest, httpServletResponse);
     }
 
