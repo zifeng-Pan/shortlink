@@ -43,7 +43,7 @@ public class RecycleBinController {
      *
      * 短链接回收站分页查询
      */
-    @GetMapping("/page")
+    @PostMapping("/page")
     public Result<IPage<ShortLinkRecycleBinPageRespDTO>> pageQuery(@RequestBody ShortLinkRecycleBinPageReqDTO shortLinkRecycleBinPageReqDTO){
         return Results.success(recycleBinService.pageQuery(shortLinkRecycleBinPageReqDTO));
     }
@@ -54,7 +54,7 @@ public class RecycleBinController {
         return Results.success();
     }
 
-    @PostMapping("/remove")
+    @DeleteMapping("/remove")
     public Result<Void> remove(@RequestBody ShortLinkRecycleBinRemoveReqDTO shortLinkRecycleBinRemoveReqDTO){
         recycleBinService.shortLinkRemove(shortLinkRecycleBinRemoveReqDTO);
         return Results.success();

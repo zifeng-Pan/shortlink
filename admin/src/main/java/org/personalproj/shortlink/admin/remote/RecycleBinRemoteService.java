@@ -1,7 +1,5 @@
 package org.personalproj.shortlink.admin.remote;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.Method;
@@ -16,8 +14,6 @@ import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkRecycleBinPageR
 import org.personalproj.shortlink.common.convention.result.Result;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
 
 public interface RecycleBinRemoteService {
 
@@ -34,28 +30,23 @@ public interface RecycleBinRemoteService {
     };
 
     default Result<IPage<ShortLinkRecycleBinPageRespDTO>> pageQuery(ShortLinkRecycleBinPageReqDTO shortLinkRecycleBinPageReqDTO){
-        Map<String, Object> requestMap = BeanUtil.beanToMap(
-                shortLinkRecycleBinPageReqDTO,
-                new HashMap<>(3),
-                CopyOptions.create()
-                        .setIgnoreNullValue(true)
-                        .setFieldValueEditor((fieldName, fieldValue) -> fieldValue.toString())
-        );
-        String responseContent = HttpUtil.get("http://127.0.0.1:8001/api/shortlink/project/v1/core/recycle/page", requestMap);
+        HttpRequest request = HttpUtil.createPost("http://127.0.0.1:8001/api/shortlink/project/v1/core/recycle-bin/page").body(JSON.toJSONString(shortLinkRecycleBinPageReqDTO));
         Type type = new TypeReference<Result<IPage<ShortLinkRecycleBinPageRespDTO>>>() {
         }.getType();
-        return JSON.parseObject(responseContent, type);
+        return JSON.parseObject(request.execute().body(), type);
     };
 
     default Result<Void> recover(ShortLinkRecycleBinRecoverReqDTO shortLinkRecycleBinRecoverReqDTO){
-        String requestUrl = "http://127.0.0.1:8001/api/shortlink/project/v1/core/recycle/recover";
+        String requestUrl = "http://127.0.0.1:8001/api/shortlink/project/v1/core/recycle-bin/recover";
         HttpRequest putReq = HttpUtil.createRequest(Method.PUT, requestUrl);
         putReq.body(JSON.toJSONString(shortLinkRecycleBinRecoverReqDTO));
         return JSON.parseObject(putReq.execute().body(),Result.class);
     };
 
     default Result<Void> remove(ShortLinkRecycleBinRemoveReqDTO shortLinkRecycleBinRemoveReqDTO){
-        HttpRequest httpRequest = HttpUtil.createPost("http://127.0.0.1:8001/api/shortlink/project/v1/core/recycle-bin/remove").body(JSON.toJSONString(shortLinkRecycleBinRemoveReqDTO));
-        return JSON.parseObject(httpRequest.execute().body(), Result.class);
+        String requestUrl = "http://127.0.0.1:8001/api/shortlink/project/v1/core/recycle-bin/remove";
+        HttpRequest putReq = HttpUtil.createRequest(Method.DELETE, requestUrl);
+        putReq.body(JSON.toJSONString(shortLinkRecycleBinRemoveReqDTO));
+        return JSON.parseObject(putReq.execute().body(), Result.class);
     };
 }

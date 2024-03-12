@@ -100,9 +100,12 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
                 .eq(ShortLinkRouteDO::getFullShortUrl, shortLinkRecycleBinRemoveReqDTO.getFullShortUrl());
 
         int shortLinkRemoveSuccess = baseMapper.delete(queryWrapper);
-        int shortLinkRouteRemoveSuccess = shortLinkRouteMapper.delete(shortLinkRouteQueryWrapper);
-        if(shortLinkRouteRemoveSuccess == -1 || shortLinkRemoveSuccess == -1){
+        if(shortLinkRemoveSuccess == -1 || shortLinkRemoveSuccess == 0 ){
             throw new ServerException("服务端彻底移除短链接失败");
+        }
+        int shortLinkRouteRemoveSuccess = shortLinkRouteMapper.delete(shortLinkRouteQueryWrapper);
+        if(shortLinkRouteRemoveSuccess == -1){
+            throw new ServerException("服务端短链接路由移除失败");
         }
     }
 }
