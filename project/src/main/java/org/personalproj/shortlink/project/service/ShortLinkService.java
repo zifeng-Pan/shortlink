@@ -69,15 +69,6 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
     void shortLinkChangeGroup(String oldGid, Long id, String gid);
 
     /**
-     * @description:
-     * @author: PzF
-     * @date: 2024/3/10 0:06
-     * @param: [gid, id]
-     * @return: void
-     **/
-    void shortLinkDelete(String gid, Long id);
-
-    /**
      * @description: 短链接跳转
      * @author: PzF
      * @date: 2024/3/10 19:47
