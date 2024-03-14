@@ -97,6 +97,8 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     private final ShortLinkAccessLogsMapper shortLinkAccessLogsMapper;
 
+    private final ShortLinkDeviceStatisticMapper shortLinkDeviceStatisticMapper;
+
     @Value("${short-link.statistic.location.user-key}")
     private String mapUserKey;
 
@@ -453,7 +455,14 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 .ip(remoteAddr)
                 .user(uv.get())
                 .build();
-
+        // 短链接访问设备记录
+        ShortLinkDeviceStatisticDO shortLinkDeviceStatisticDO = ShortLinkDeviceStatisticDO.builder()
+                .gid(gid)
+                .fullShortUrl(fullShortUrl)
+                .cnt(1)
+                .date(now)
+                .device(LinkUtil.getDevice(httpServletRequest))
+                .build();
         DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
         transactionDefinition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
@@ -462,6 +471,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             generateLocationStatisticDO(fullShortUrl,gid, remoteAddr, now);
             shortLinkOsStatisticMapper.shortLinkOsState(shortLinkOsStatisticDO);
             shortLinkBrowserStatisticMapper.shortLinkBrowserState(shortLinkBrowserStatisticDO);
+            shortLinkDeviceStatisticMapper.shortLinkDeviceState(shortLinkDeviceStatisticDO);
             shortLinkAccessLogsMapper.insert(shortLinkAccessLogsDO);
             transactionManager.commit(transactionStatus);
         } catch (Exception e){
