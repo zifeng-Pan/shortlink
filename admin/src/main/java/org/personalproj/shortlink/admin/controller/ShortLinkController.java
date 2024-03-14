@@ -65,9 +65,4 @@ public class ShortLinkController {
     public Result<Void> shortLinkChangeGroup(@RequestParam("oldGid") String oldGid, @RequestParam("id") Long id, @RequestParam("gid") String gid){
         return shortLinkRemoteService.shortLinkChangeGroup(oldGid, id, gid);
     }
-
-    @DeleteMapping("/api/shortlink/admin/v1/core/del")
-    public Result<Void> shortLinkDelete(@RequestParam("gid") String gid, @RequestParam("id") Long id){
-        return shortLinkRemoteService.shortLinkDelete(gid,id);
-    }
 }

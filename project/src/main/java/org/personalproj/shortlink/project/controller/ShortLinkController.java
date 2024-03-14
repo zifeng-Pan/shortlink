@@ -63,10 +63,4 @@ public class ShortLinkController {
         shortLinkService.shortLinkChangeGroup(oldGid, id, gid);
         return Results.success();
     }
-
-    @DeleteMapping("/api/shortlink/project/v1/core/del")
-    public Result<Void> shortLinkDelete(@RequestParam("gid") String gid, @RequestParam("id") Long id){
-        shortLinkService.shortLinkDelete(gid,id);
-        return Results.success();
-    }
 }

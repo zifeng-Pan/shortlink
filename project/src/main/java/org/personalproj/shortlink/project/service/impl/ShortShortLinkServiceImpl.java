@@ -340,20 +340,6 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         }
     }
 
-    @Override
-    @Transactional(rollbackFor = {RuntimeException.class})
-    public void shortLinkDelete(String gid, Long id) {
-        // 短链接删除,由于是逻辑删除，不更改路由表
-        LambdaUpdateWrapper<ShortLinkDO> deleteWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
-                .eq(ShortLinkDO::getGid, gid)
-                .eq(ShortLinkDO::getId, id)
-                .set(ShortLinkDO::getDelFlag, 1);
-        int deleteSuccess = baseMapper.update(null, deleteWrapper);
-        if(deleteSuccess == -1){
-            throw new ServerException("短链接删除失败");
-        }
-    }
-
     /**
      *
      * 根据短链接创建请求生成短链接后缀
