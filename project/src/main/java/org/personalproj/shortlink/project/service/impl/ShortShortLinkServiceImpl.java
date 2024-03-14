@@ -63,6 +63,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.*;
 
@@ -94,10 +95,14 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     private final ShortLinkBrowserStatisticMapper shortLinkBrowserStatisticMapper;
 
+    private final ShortLinkAccessLogsMapper shortLinkAccessLogsMapper;
+
     @Value("${short-link.statistic.location.user-key}")
     private String mapUserKey;
 
     private final AtomicBoolean uvFirstFlag = new AtomicBoolean();
+
+    private final AtomicReference<String> uv = new AtomicReference<>();
 
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws InterruptedException, IOException {
@@ -367,6 +372,8 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
     private void shortLinkStatistic(String fullShortUrl, String gid, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse){
         Cookie[] cookies = httpServletRequest.getCookies();
         FutureTask<AtomicBoolean> generateCookieTask = null;
+        String browser = LinkUtil.getBrowser(httpServletRequest);
+        String os = LinkUtil.getOperatingSystem(httpServletRequest);
         // 如果cookie是空的
         if(ArrayUtil.isEmpty(cookies)){
             generateCookieTask = new FutureTask<>(new generateCookieToResponse(fullShortUrl, httpServletResponse), uvFirstFlag);
@@ -379,6 +386,10 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                     .map(cookie -> cookie.getValue())
                     .ifPresentOrElse( cookie -> {
                         Long uvAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATISTIC_COOKIE_UV + fullShortUrl, cookie);
+                        if( uvAdd != null && uvAdd > 0L){
+                            uvFirstFlag.set(Boolean.FALSE);
+                            uv.set(cookie);
+                        }
                         uvFirstFlag.set(uvAdd != null && uvAdd > 0L);
                     },
                     new generateCookieToResponse(fullShortUrl, httpServletResponse));
@@ -415,8 +426,9 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             e.printStackTrace();
             throw new ServerException("异步生成cookie任务执行失败:" + e.getMessage());
         }
+
+        // 短链接统计表相关实体创建
         // 短链接访问操作系统统计
-        String os = LinkUtil.getOperatingSystem(httpServletRequest);
         ShortLinkOsStatisticDO shortLinkOsStatisticDO = ShortLinkOsStatisticDO.builder()
                 .os(os)
                 .gid(gid)
@@ -426,12 +438,22 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 .build();
         // 短链接访问浏览器统计
         ShortLinkBrowserStatisticDO shortLinkBrowserStatisticDO = ShortLinkBrowserStatisticDO.builder()
-                .browser(LinkUtil.getBrowser(httpServletRequest))
+                .browser(browser)
                 .cnt(1)
                 .gid(gid)
                 .fullShortUrl(fullShortUrl)
                 .date(now)
                 .build();
+        // 短链接访问日志记录
+        ShortLinkAccessLogsDO shortLinkAccessLogsDO = ShortLinkAccessLogsDO.builder()
+                .browser(browser)
+                .os(os)
+                .gid(gid)
+                .fullShortUrl(fullShortUrl)
+                .ip(remoteAddr)
+                .user(uv.get())
+                .build();
+
         DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
         transactionDefinition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
@@ -440,6 +462,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             generateLocationStatisticDO(fullShortUrl,gid, remoteAddr, now);
             shortLinkOsStatisticMapper.shortLinkOsState(shortLinkOsStatisticDO);
             shortLinkBrowserStatisticMapper.shortLinkBrowserState(shortLinkBrowserStatisticDO);
+            shortLinkAccessLogsMapper.insert(shortLinkAccessLogsDO);
             transactionManager.commit(transactionStatus);
         } catch (Exception e){
             transactionManager.rollback(transactionStatus);
@@ -498,6 +521,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             uvCookie.setMaxAge(60 * 60 * 24 * 30);
             uvCookie.setPath(StrUtil.sub(fullShortUrl,fullShortUrl.indexOf("/"),fullShortUrl.length()));
             response.addCookie(uvCookie);
+            uv.set(uvCookie.getValue());
             stringRedisTemplate.opsForSet().add(SHORT_LINK_STATISTIC_COOKIE_UV + fullShortUrl, uvCookieValue);
             uvFirstFlag.set(Boolean.TRUE);
         }
