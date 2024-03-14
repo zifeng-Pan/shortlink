@@ -31,7 +31,9 @@ import org.personalproj.shortlink.common.convention.exception.ClientException;
 import org.personalproj.shortlink.common.convention.exception.ServerException;
 import org.personalproj.shortlink.project.common.enums.ValidDateType;
 import org.personalproj.shortlink.project.dao.entity.*;
+import org.personalproj.shortlink.project.dao.entity.statistic.*;
 import org.personalproj.shortlink.project.dao.mapper.*;
+import org.personalproj.shortlink.project.dao.mapper.statistic.*;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
@@ -98,6 +100,8 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
     private final ShortLinkAccessLogsMapper shortLinkAccessLogsMapper;
 
     private final ShortLinkDeviceStatisticMapper shortLinkDeviceStatisticMapper;
+
+    private final ShortLinkNetWorkStatisticMapper shortLinkNetWorkStatisticMapper;
 
     @Value("${short-link.statistic.location.user-key}")
     private String mapUserKey;
@@ -463,6 +467,14 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 .date(now)
                 .device(LinkUtil.getDevice(httpServletRequest))
                 .build();
+        // 短链接访问网络记录
+        ShortLinkNetWorkStatisticDO shortLinkNetWorkStatisticDO = ShortLinkNetWorkStatisticDO.builder()
+                .network(LinkUtil.getNetwork(httpServletRequest))
+                .cnt(1)
+                .gid(gid)
+                .fullShortUrl(fullShortUrl)
+                .date(now)
+                .build();
         DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
         transactionDefinition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
@@ -473,6 +485,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             shortLinkBrowserStatisticMapper.shortLinkBrowserState(shortLinkBrowserStatisticDO);
             shortLinkDeviceStatisticMapper.shortLinkDeviceState(shortLinkDeviceStatisticDO);
             shortLinkAccessLogsMapper.insert(shortLinkAccessLogsDO);
+            shortLinkNetWorkStatisticMapper.shortLinkNetworkState(shortLinkNetWorkStatisticDO);
             transactionManager.commit(transactionStatus);
         } catch (Exception e){
             transactionManager.rollback(transactionStatus);

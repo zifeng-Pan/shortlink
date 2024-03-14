@@ -1,4 +1,4 @@
-package org.personalproj.shortlink.project.dao.entity;
+package org.personalproj.shortlink.project.dao.entity.statistic;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -13,7 +13,7 @@ import java.util.Date;
 
 /**
  * @BelongsProject: shortlink
- * @BelongsPackage: org.personalproj.shortlink.project.dao.entity
+ * @BelongsPackage: org.personalproj.shortlink.project.dao.entity.statistic
  * @Author: PzF
  * @CreateTime: 2024-03-14  14:57
  * @Description: 短链接设备统计实体类

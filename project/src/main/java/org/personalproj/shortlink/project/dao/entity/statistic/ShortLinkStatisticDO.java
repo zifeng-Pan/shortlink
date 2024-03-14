@@ -1,32 +1,30 @@
-package org.personalproj.shortlink.project.dao.entity;
+package org.personalproj.shortlink.project.dao.entity.statistic;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.personalproj.shortlink.common.database.BaseDO;
 
 import java.util.Date;
 
 /**
  * @BelongsProject: shortlink
- * @BelongsPackage: org.personalproj.shortlink.project.dao.entity
+ * @BelongsPackage: org.personalproj.shortlink.project.dao.entity.statistic
  * @Author: PzF
- * @CreateTime: 2024-03-14  09:07
- * @Description: 短链接地区统计实体
+ * @CreateTime: 2024-03-13  09:25
+ * @Description: 短链接基础访问统计实体[具体到日期，星期，小时内的uv,pv,uip]
  * @Version: 1.0
  */
-
 @Data
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@TableName("t_link_location_statistic")
-public class ShortLinkLocationStatisticDO extends BaseDO {
+@TableName("t_link_statistic")
+public class ShortLinkStatisticDO extends BaseDO {
     @TableId(type = IdType.AUTO)
+    /**
+     * id
+     */
     private Long id;
 
     /**
@@ -35,7 +33,7 @@ public class ShortLinkLocationStatisticDO extends BaseDO {
     private String fullShortUrl;
 
     /**
-     * 分组标识
+     * 所属短链接组的gid
      */
     private String gid;
 
@@ -47,25 +45,25 @@ public class ShortLinkLocationStatisticDO extends BaseDO {
     /**
      * 访问量
      */
-    private Integer cnt;
+    private Integer pv;
 
     /**
-     * 省份名称
+     * 独立访客数
      */
-    private String province;
+    private Integer uv;
 
     /**
-     * 市名称
+     * 独立ip数
      */
-    private String city;
+    private Integer uip;
 
     /**
-     * 城市编码
+     * 小时
      */
-    private String adcode;
+    private Integer hour;
 
     /**
-     * 国家标识
+     * 星期
      */
-    private String country;
+    private Integer weekday;
 }

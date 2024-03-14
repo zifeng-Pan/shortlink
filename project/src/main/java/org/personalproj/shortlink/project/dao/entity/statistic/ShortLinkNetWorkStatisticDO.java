@@ -1,4 +1,4 @@
-package org.personalproj.shortlink.project.dao.entity;
+package org.personalproj.shortlink.project.dao.entity.statistic;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -13,18 +13,18 @@ import java.util.Date;
 
 /**
  * @BelongsProject: shortlink
- * @BelongsPackage: org.personalproj.shortlink.project.dao.entity
+ * @BelongsPackage: org.personalproj.shortlink.project.dao.entity.statistic
  * @Author: PzF
- * @CreateTime: 2024-03-14  12:57
- * @Description: 短链接操作系统统计
+ * @CreateTime: 2024-03-14  16:10
+ * @Description: 短链接监控之网络监控实体
  * @Version: 1.0
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("t_link_os_statistic")
-public class ShortLinkOsStatisticDO extends BaseDO {
+@TableName("t_link_network_statistic")
+public class ShortLinkNetWorkStatisticDO extends BaseDO {
     @TableId(type = IdType.AUTO)
     private Long id;
 
@@ -49,7 +49,7 @@ public class ShortLinkOsStatisticDO extends BaseDO {
     private Integer cnt;
 
     /**
-     * 操作系统
+     * 访问网络
      */
-    private String os;
+    private String network;
 }

@@ -1,30 +1,31 @@
-package org.personalproj.shortlink.project.dao.entity;
+package org.personalproj.shortlink.project.dao.entity.statistic;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.personalproj.shortlink.common.database.BaseDO;
 
 import java.util.Date;
 
 /**
  * @BelongsProject: shortlink
- * @BelongsPackage: org.personalproj.shortlink.project.dao.entity
+ * @BelongsPackage: org.personalproj.shortlink.project.dao.entity.statistic
  * @Author: PzF
- * @CreateTime: 2024-03-13  09:25
- * @Description: 短链接基础访问统计实体[具体到日期，星期，小时内的uv,pv,uip]
+ * @CreateTime: 2024-03-14  12:57
+ * @Description: 短链接操作系统统计
  * @Version: 1.0
  */
 @Data
 @Builder
-@TableName("t_link_statistic")
-public class ShortLinkStatisticDO extends BaseDO {
+@NoArgsConstructor
+@AllArgsConstructor
+@TableName("t_link_os_statistic")
+public class ShortLinkOsStatisticDO extends BaseDO {
     @TableId(type = IdType.AUTO)
-    /**
-     * id
-     */
     private Long id;
 
     /**
@@ -33,7 +34,7 @@ public class ShortLinkStatisticDO extends BaseDO {
     private String fullShortUrl;
 
     /**
-     * 所属短链接组的gid
+     * 分组标识
      */
     private String gid;
 
@@ -45,25 +46,10 @@ public class ShortLinkStatisticDO extends BaseDO {
     /**
      * 访问量
      */
-    private Integer pv;
+    private Integer cnt;
 
     /**
-     * 独立访客数
+     * 操作系统
      */
-    private Integer uv;
-
-    /**
-     * 独立ip数
-     */
-    private Integer uip;
-
-    /**
-     * 小时
-     */
-    private Integer hour;
-
-    /**
-     * 星期
-     */
-    private Integer weekday;
+    private String os;
 }

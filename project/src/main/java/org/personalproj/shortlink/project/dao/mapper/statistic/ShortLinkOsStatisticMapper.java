@@ -1,9 +1,9 @@
-package org.personalproj.shortlink.project.dao.mapper;
+package org.personalproj.shortlink.project.dao.mapper.statistic;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
-import org.personalproj.shortlink.project.dao.entity.ShortLinkOsStatisticDO;
+import org.personalproj.shortlink.project.dao.entity.statistic.ShortLinkOsStatisticDO;
 
 /**
  *

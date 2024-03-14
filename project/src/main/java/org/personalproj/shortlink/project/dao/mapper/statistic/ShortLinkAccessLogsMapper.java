@@ -1,7 +1,7 @@
-package org.personalproj.shortlink.project.dao.mapper;
+package org.personalproj.shortlink.project.dao.mapper.statistic;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.personalproj.shortlink.project.dao.entity.ShortLinkAccessLogsDO;
+import org.personalproj.shortlink.project.dao.entity.statistic.ShortLinkAccessLogsDO;
 
 /**
  *
