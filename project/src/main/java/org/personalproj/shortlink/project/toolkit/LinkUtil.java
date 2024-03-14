@@ -39,4 +39,29 @@ public class LinkUtil {
         }
         return ipAddress;
     }
+
+    /**
+     * @description: 获取用户所使用的操作系统
+     * @author: PzF
+     * @date: 2024/3/14 13:04
+     * @param: [request]
+     * @return: java.lang.String
+     **/
+    public static String getOperatingSystem(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+
+        if (userAgent.contains("Windows")) {
+            return "Windows";
+        } else if (userAgent.contains("Mac")) {
+            return "Mac";
+        } else if (userAgent.contains("Linux")) {
+            return "Linux";
+        } else if (userAgent.contains("Android")) {
+            return "Android";
+        } else if (userAgent.contains("iOS")) {
+            return "iOS";
+        } else {
+            return "Unknown";
+        }
+    }
 }

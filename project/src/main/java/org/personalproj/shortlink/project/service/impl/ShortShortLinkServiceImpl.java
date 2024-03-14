@@ -30,14 +30,8 @@ import org.jsoup.nodes.Element;
 import org.personalproj.shortlink.common.convention.exception.ClientException;
 import org.personalproj.shortlink.common.convention.exception.ServerException;
 import org.personalproj.shortlink.project.common.enums.ValidDateType;
-import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
-import org.personalproj.shortlink.project.dao.entity.ShortLinkLocationStatisticDO;
-import org.personalproj.shortlink.project.dao.entity.ShortLinkRouteDO;
-import org.personalproj.shortlink.project.dao.entity.ShortLinkStatisticDO;
-import org.personalproj.shortlink.project.dao.mapper.ShortLinkLocationStatisticMapper;
-import org.personalproj.shortlink.project.dao.mapper.ShortLinkMapper;
-import org.personalproj.shortlink.project.dao.mapper.ShortLinkRouteMapper;
-import org.personalproj.shortlink.project.dao.mapper.ShortLinkStatisticMapper;
+import org.personalproj.shortlink.project.dao.entity.*;
+import org.personalproj.shortlink.project.dao.mapper.*;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
@@ -93,6 +87,8 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
     private final StringRedisTemplate stringRedisTemplate;
 
     private final ShortLinkStatisticMapper shortLinkStatisticMapper;
+
+    private final ShortLinkOsStatisticMapper shortLinkOsStatisticMapper;
 
     private final ShortLinkLocationStatisticMapper shortLinkLocationStatisticMapper;
 
@@ -417,12 +413,21 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             e.printStackTrace();
             throw new ServerException("异步生成cookie任务执行失败:" + e.getMessage());
         }
+        String os = LinkUtil.getOperatingSystem(httpServletRequest);
+        ShortLinkOsStatisticDO shortLinkOsStatisticDO = ShortLinkOsStatisticDO.builder()
+                .os(os)
+                .gid(gid)
+                .fullShortUrl(fullShortUrl)
+                .date(now)
+                .cnt(1)
+                .build();
         DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
         transactionDefinition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
         try {
             shortLinkStatisticMapper.shortLinkStatisticInsert(shortLinkStatistic);
             generateLocationStatisticDO(fullShortUrl,gid, remoteAddr, now);
+            shortLinkOsStatisticMapper.shortLinkOsState(shortLinkOsStatisticDO);
             transactionManager.commit(transactionStatus);
         } catch (Exception e){
             transactionManager.rollback(transactionStatus);
