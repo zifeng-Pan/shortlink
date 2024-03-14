@@ -7,6 +7,9 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -28,8 +31,10 @@ import org.personalproj.shortlink.common.convention.exception.ClientException;
 import org.personalproj.shortlink.common.convention.exception.ServerException;
 import org.personalproj.shortlink.project.common.enums.ValidDateType;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
+import org.personalproj.shortlink.project.dao.entity.ShortLinkLocationStatisticDO;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkRouteDO;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkStatisticDO;
+import org.personalproj.shortlink.project.dao.mapper.ShortLinkLocationStatisticMapper;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkRouteMapper;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkStatisticMapper;
@@ -45,6 +50,7 @@ import org.personalproj.shortlink.project.toolkit.ShortLinkHashUtil;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -88,7 +94,12 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     private final ShortLinkStatisticMapper shortLinkStatisticMapper;
 
-    private AtomicBoolean uvFirstFlag = new AtomicBoolean();
+    private final ShortLinkLocationStatisticMapper shortLinkLocationStatisticMapper;
+
+    @Value("${short-link.statistic.location.user-key}")
+    private String mapUserKey;
+
+    private final AtomicBoolean uvFirstFlag = new AtomicBoolean();
 
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws InterruptedException, IOException {
@@ -343,6 +354,10 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         }
     }
 
+    /**
+     *
+     * 根据短链接创建请求生成短链接后缀
+     */
     private String generateSuffix(ShortLinkCreateReqDTO shortLinkCreateReqDTO){
         String originUrl = shortLinkCreateReqDTO.getOriginUrl();
         String shortUri;
@@ -397,7 +412,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         Long uipAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATISTIC_UIP + fullShortUrl, remoteAddr);
         boolean uipFirstFlag = (uipAdd != null && uipAdd > 0L);
 
-        ShortLinkStatisticDO shortLinkStatistic = null;
+        ShortLinkStatisticDO shortLinkStatistic;
         try {
             shortLinkStatistic = ShortLinkStatisticDO.builder()
                     .fullShortUrl(fullShortUrl)
@@ -416,12 +431,12 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             e.printStackTrace();
             throw new ServerException("异步生成cookie任务执行失败:" + e.getMessage());
         }
-
         DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
         transactionDefinition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
         try {
-            shortLinkStatisticMapper.insert(shortLinkStatistic);
+            shortLinkStatisticMapper.shortLinkStatisticInsert(shortLinkStatistic);
+            generateLocationStatisticDO(fullShortUrl,gid, remoteAddr, now);
             transactionManager.commit(transactionStatus);
         } catch (Exception e){
             transactionManager.rollback(transactionStatus);
@@ -430,6 +445,41 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         }
     }
 
+    /**
+     *
+     * 短链接地区信息统计
+     */
+    private void generateLocationStatisticDO(String fullShortUrl, String gid, String remoteAddr, Date now){
+        ShortLinkLocationStatisticDO locationStatisticDO;
+        // 向高德API发送请求获取IP相关的地区信息
+        Map<String, Object> mapRequestMap = new HashMap<>(2);
+        mapRequestMap.put("key", mapUserKey);
+        mapRequestMap.put("ip",remoteAddr);
+        String mapApiResponse = HttpUtil.get("https://restapi.amap.com/v3", mapRequestMap);
+        JSONObject jsonObject = JSON.parseObject(mapApiResponse);
+        String infoCode = jsonObject.getString("infocode");
+        if(StrUtil.isNotBlank(infoCode) &&  Objects.equals(infoCode,"10000")){
+            String province = jsonObject.getString("province");
+            boolean unKnownFlag = StrUtil.isBlank(province);
+            locationStatisticDO = ShortLinkLocationStatisticDO.builder()
+                    .gid(gid)
+                    .fullShortUrl(fullShortUrl)
+                    .date(now)
+                    .cnt(1)
+                    .country("中国")
+                    .province(unKnownFlag ? "未知" : province)
+                    .city(unKnownFlag ? "未知" : jsonObject.getString("city"))
+                    .adcode(unKnownFlag ? "未知" : jsonObject.getString("adcode"))
+                    .build();
+            shortLinkLocationStatisticMapper.shortLinkLocaleState(locationStatisticDO);
+        }
+    }
+
+
+    /**
+     *
+     * 生成UV统计时需要的的cookie的任务
+     */
     @Data
     @AllArgsConstructor
     private class generateCookieToResponse implements Runnable{
@@ -450,12 +500,20 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         }
     }
 
+    /**
+     *
+     * 获取短链接的有效时间
+     */
     private long getShortLinkCacheValidTime(Date validDate){
         return Optional.ofNullable(validDate)
                 .map(time -> DateUtil.between(new Date(), time, DateUnit.MS))
                 .orElse(DEFAULT_SHORT_LINK_CACHE_VALID_TIME);
     }
 
+    /**
+     *
+     * 根据Url获取网站图标
+     */
     @SneakyThrows
     private String getFavicon(String url) {
         URL targetUrl = new URL(url);
