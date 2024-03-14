@@ -92,6 +92,8 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     private final ShortLinkLocationStatisticMapper shortLinkLocationStatisticMapper;
 
+    private final ShortLinkBrowserStatisticMapper shortLinkBrowserStatisticMapper;
+
     @Value("${short-link.statistic.location.user-key}")
     private String mapUserKey;
 
@@ -413,6 +415,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             e.printStackTrace();
             throw new ServerException("异步生成cookie任务执行失败:" + e.getMessage());
         }
+        // 短链接访问操作系统统计
         String os = LinkUtil.getOperatingSystem(httpServletRequest);
         ShortLinkOsStatisticDO shortLinkOsStatisticDO = ShortLinkOsStatisticDO.builder()
                 .os(os)
@@ -421,6 +424,14 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 .date(now)
                 .cnt(1)
                 .build();
+        // 短链接访问浏览器统计
+        ShortLinkBrowserStatisticDO shortLinkBrowserStatisticDO = ShortLinkBrowserStatisticDO.builder()
+                .browser(LinkUtil.getBrowser(httpServletRequest))
+                .cnt(1)
+                .gid(gid)
+                .fullShortUrl(fullShortUrl)
+                .date(now)
+                .build();
         DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
         transactionDefinition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
@@ -428,6 +439,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             shortLinkStatisticMapper.shortLinkStatisticInsert(shortLinkStatistic);
             generateLocationStatisticDO(fullShortUrl,gid, remoteAddr, now);
             shortLinkOsStatisticMapper.shortLinkOsState(shortLinkOsStatisticDO);
+            shortLinkBrowserStatisticMapper.shortLinkBrowserState(shortLinkBrowserStatisticDO);
             transactionManager.commit(transactionStatus);
         } catch (Exception e){
             transactionManager.rollback(transactionStatus);
