@@ -47,4 +47,16 @@ public class RedisCacheConstant {
      */
     public static final long DEFAULT_SHORT_LINK_CACHE_VALID_TIME = 2629800000L;
 
+    /**
+     *
+     * 短链接uv的cookie统计
+     */
+    public static final String SHORT_LINK_STATISTIC_COOKIE_UV = "short_link:statistic:cookie:uv:";
+
+    /**
+     *
+     * 短链接uip统计
+     */
+    public static final String SHORT_LINK_STATISTIC_UIP = "short_link:statistic:uip:";
+
 }

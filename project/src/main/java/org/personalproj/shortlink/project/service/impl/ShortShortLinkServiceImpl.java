@@ -5,6 +5,7 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -12,8 +13,11 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +29,10 @@ import org.personalproj.shortlink.common.convention.exception.ServerException;
 import org.personalproj.shortlink.project.common.enums.ValidDateType;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkDO;
 import org.personalproj.shortlink.project.dao.entity.ShortLinkRouteDO;
+import org.personalproj.shortlink.project.dao.entity.ShortLinkStatisticDO;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.personalproj.shortlink.project.dao.mapper.ShortLinkRouteMapper;
+import org.personalproj.shortlink.project.dao.mapper.ShortLinkStatisticMapper;
 import org.personalproj.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
@@ -34,6 +40,7 @@ import org.personalproj.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.personalproj.shortlink.project.service.ShortLinkService;
+import org.personalproj.shortlink.project.toolkit.LinkUtil;
 import org.personalproj.shortlink.project.toolkit.ShortLinkHashUtil;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
@@ -52,7 +59,10 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.personalproj.shortlink.common.constnat.RedisCacheConstant.*;
 
@@ -76,6 +86,10 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     private final StringRedisTemplate stringRedisTemplate;
 
+    private final ShortLinkStatisticMapper shortLinkStatisticMapper;
+
+    private AtomicBoolean uvFirstFlag = new AtomicBoolean();
+
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws InterruptedException, IOException {
         // 对路由表设置的是fullShortUrl（全局唯一）与gid之间的映射，不直接fullShortUrl映射shortUri的原因是需要到短链接表中看是否删除以及是否启用,同时还需要看是否过期
@@ -85,23 +99,24 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         // 如果为空，可能缓存失效或者现在没有对应的缓存数据，可能存在缓存击穿或者缓存穿透的问题
         if(StrUtil.isNotBlank(originalLink)){
             try {
+                shortLinkStatistic(fullShortUrl,null,httpServletRequest,httpServletResponse);
                 httpServletResponse.sendRedirect(originalLink);
                 return;
             } catch (IOException e) {
-                throw new ClientException("短链接跳转失败");
+                throw new ClientException(String.format("短链接:{},跳转失败",fullShortUrl));
             }
         }
         // redis不存在full_short_url这个key的时候，解决缓存穿透[缓存中没有对应的缓存数据，如果是缓存失效的话，布隆过滤器中还是存在的]的问题
         // 1. 检查布隆过滤器中是否存在full_short_url,如果不存在直接返回空
         if(!shortUriCreateCachePenetrationBloomFilter.contains(fullShortUrl)){
             httpServletResponse.sendRedirect("/page/notfound");
-            throw new ClientException("短链接未创建");
+            throw new ClientException(String.format("短链接:{},未创建",fullShortUrl));
         }
         // 2. 判定为存在的情况，检查redis缓存是否存储了对应的空值，如果有的话直接返回空
         String nullCacheValue = stringRedisTemplate.opsForValue().get(String.format(ROUTE_SHORT_LINK_NULL_KEY, fullShortUrl));
         if(StrUtil.isNotBlank(nullCacheValue)){
             httpServletResponse.sendRedirect("/page/notfound");
-            throw new ClientException("短链接未创建");
+            throw new ClientException(String.format("短链接:{},跳转失败",fullShortUrl));
         }
         // 3. 空值key不存在于缓存中的话，加锁查询数据库，数据库中查询不到的时候，将空值key插入redis中
         RLock lock = redissonClient.getLock(String.format(LOCK_ROUTE_SHORT_LINK_KEY, fullShortUrl));
@@ -110,6 +125,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 // 双重判定锁
                 originalLink = stringRedisTemplate.opsForValue().get(String.format(ROUTE_SHORT_LINK_KEY, fullShortUrl));
                 if (StrUtil.isNotBlank(originalLink)) {
+                    shortLinkStatistic(fullShortUrl,null,httpServletRequest,httpServletResponse);
                     httpServletResponse.sendRedirect(originalLink);
                     return;
                 }
@@ -150,6 +166,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                                 TimeUnit.MILLISECONDS
                         );
                     }
+                    shortLinkStatistic(fullShortUrl,shortLinkDO.getGid(),httpServletRequest,httpServletResponse);
                     httpServletResponse.sendRedirect(shortLinkDO.getOriginUrl());
                 }
             } catch (IOException e) {
@@ -345,6 +362,92 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             generateRetryCount++;
         }
         return shortUri;
+    }
+
+
+    private void shortLinkStatistic(String fullShortUrl, String gid, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse){
+        Cookie[] cookies = httpServletRequest.getCookies();
+        FutureTask<AtomicBoolean> generateCookieTask = null;
+        // 如果cookie是空的
+        if(ArrayUtil.isEmpty(cookies)){
+            generateCookieTask = new FutureTask<>(new generateCookieToResponse(fullShortUrl, httpServletResponse), uvFirstFlag);
+            Thread addCookieThread = new Thread(generateCookieTask);
+            addCookieThread.start();
+        } else {
+            Arrays.stream(cookies)
+                    .filter(cookie -> Objects.equals(cookie.getName(),"uv"))
+                    .findFirst()
+                    .map(cookie -> cookie.getValue())
+                    .ifPresentOrElse( cookie -> {
+                        Long uvAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATISTIC_COOKIE_UV + fullShortUrl, cookie);
+                        uvFirstFlag.set(uvAdd != null && uvAdd > 0L);
+                    },
+                    new generateCookieToResponse(fullShortUrl, httpServletResponse));
+        }
+        if(StrUtil.isBlank(gid)){
+            LambdaQueryWrapper<ShortLinkRouteDO> shortLinkRouteLambdaQueryWrapper = Wrappers.lambdaQuery(ShortLinkRouteDO.class)
+                    .eq(ShortLinkRouteDO::getFullShortUrl, fullShortUrl);
+            ShortLinkRouteDO shortLinkRouteDO = shortLinkRouteMapper.selectOne(shortLinkRouteLambdaQueryWrapper);
+            gid = shortLinkRouteDO.getGid();
+        }
+        Date now = new Date();
+        int weekDay = DateUtil.dayOfWeekEnum(now).getIso8601Value();
+        // uip 标记设置
+        String remoteAddr = LinkUtil.getActualIp(httpServletRequest);
+        Long uipAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATISTIC_UIP + fullShortUrl, remoteAddr);
+        boolean uipFirstFlag = (uipAdd != null && uipAdd > 0L);
+
+        ShortLinkStatisticDO shortLinkStatistic = null;
+        try {
+            shortLinkStatistic = ShortLinkStatisticDO.builder()
+                    .fullShortUrl(fullShortUrl)
+                    .gid(gid)
+                    .date(now)
+                    .pv(1)
+                    .uv((generateCookieTask == null ? uvFirstFlag.get() : generateCookieTask.get().get()) ? 1 : 0)
+                    .uip(uipFirstFlag ? 1 : 0)
+                    .hour(DateUtil.hour(now, true))
+                    .weekday(weekDay)
+                    .build();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            throw new ServerException("异步生成cookie任务被打断:" + e.getMessage());
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            throw new ServerException("异步生成cookie任务执行失败:" + e.getMessage());
+        }
+
+        DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
+        transactionDefinition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+        TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
+        try {
+            shortLinkStatisticMapper.insert(shortLinkStatistic);
+            transactionManager.commit(transactionStatus);
+        } catch (Exception e){
+            transactionManager.rollback(transactionStatus);
+            log.error("gid:{},短链接:{} 对应的访问统计量新增或更新失败",gid,fullShortUrl);
+            throw new ServerException(e.getMessage());
+        }
+    }
+
+    @Data
+    @AllArgsConstructor
+    private class generateCookieToResponse implements Runnable{
+
+        private String fullShortUrl;
+
+        private HttpServletResponse response;
+
+        @Override
+        public void run() {
+            String uvCookieValue = UUID.fastUUID().toString(false);
+            Cookie uvCookie = new Cookie("uv", uvCookieValue);
+            uvCookie.setMaxAge(60 * 60 * 24 * 30);
+            uvCookie.setPath(StrUtil.sub(fullShortUrl,fullShortUrl.indexOf("/"),fullShortUrl.length()));
+            response.addCookie(uvCookie);
+            stringRedisTemplate.opsForSet().add(SHORT_LINK_STATISTIC_COOKIE_UV + fullShortUrl, uvCookieValue);
+            uvFirstFlag.set(Boolean.TRUE);
+        }
     }
 
     private long getShortLinkCacheValidTime(Date validDate){
