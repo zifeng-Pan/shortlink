@@ -7,10 +7,7 @@ import org.personalproj.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 import org.personalproj.shortlink.project.dto.resp.stats.ShortLinkStatsRespDTO;
 import org.personalproj.shortlink.project.service.ShortLinkStatisticService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @BelongsProject: shortlink
@@ -27,12 +24,12 @@ public class ShortLinkStatisticController {
 
     private final ShortLinkStatisticService shortLinkStatisticService;
 
-    @GetMapping("/single")
+    @PostMapping("/single")
     public Result<ShortLinkStatsRespDTO> shortLinkStats(@RequestBody ShortLinkStatsReqDTO shortLinkStatsReqDTO){
         return Results.success(shortLinkStatisticService.singleShortLinkStatistic(shortLinkStatsReqDTO));
     }
 
-    @GetMapping("/group")
+    @PostMapping("/group")
     public Result<ShortLinkStatsRespDTO> shortLinkGroupStats(@RequestBody ShortLinkGroupStatsReqDTO ShortLinkGroupStatsReqDTO){
         return Results.success(shortLinkStatisticService.groupShortLinkStats(ShortLinkGroupStatsReqDTO));
     }
