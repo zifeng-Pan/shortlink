@@ -415,6 +415,34 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
         ShortLinkStatisticDO shortLinkStatistic;
         ShortLinkAccessLogsDO shortLinkAccessLogsDO;
+        ShortLinkLocationStatisticDO locationStatisticDO = null;
+
+        String network = LinkUtil.getNetwork(httpServletRequest);
+        String device = LinkUtil.getDevice(httpServletRequest);
+
+        // 地区统计数据
+        // 向高德API发送请求获取IP相关的地区信息
+        Map<String, Object> mapRequestMap = new HashMap<>(2);
+        mapRequestMap.put("key", mapUserKey);
+        String mapApiResponse = HttpUtil.get("https://restapi.amap.com/v3/ip", mapRequestMap);
+        JSONObject jsonObject = JSON.parseObject(mapApiResponse);
+        String infoCode = jsonObject.getString("infocode");
+        if(StrUtil.isNotBlank(infoCode) &&  Objects.equals(infoCode,"10000")){
+            String province = jsonObject.getString("province");
+            boolean unKnownFlag = StrUtil.isBlank(province);
+            locationStatisticDO = ShortLinkLocationStatisticDO.builder()
+                    .gid(gid)
+                    .fullShortUrl(fullShortUrl)
+                    .date(now)
+                    .cnt(1)
+                    .country("中国")
+                    .province(unKnownFlag ? "未知" : province)
+                    .city(unKnownFlag ? "未知" : jsonObject.getString("city"))
+                    .adcode(unKnownFlag ? "未知" : jsonObject.getString("adcode"))
+                    .build();
+
+        }
+
         try {
             // 短链接基础访问记录生成
             shortLinkStatistic = ShortLinkStatisticDO.builder()
@@ -436,6 +464,9 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                     .fullShortUrl(fullShortUrl)
                     .ip(remoteAddr)
                     .user(uv.get())
+                    .network(network)
+                    .device(device)
+                    .locale(StrUtil.join("-","中国", locationStatisticDO.getProvince(), locationStatisticDO.getCity()))
                     .date(now)
                     .build();
         } catch (InterruptedException e) {
@@ -470,11 +501,11 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 .fullShortUrl(fullShortUrl)
                 .cnt(1)
                 .date(now)
-                .device(LinkUtil.getDevice(httpServletRequest))
+                .device(device)
                 .build();
         // 短链接访问网络记录
         ShortLinkNetWorkStatisticDO shortLinkNetWorkStatisticDO = ShortLinkNetWorkStatisticDO.builder()
-                .network(LinkUtil.getNetwork(httpServletRequest))
+                .network(network)
                 .cnt(1)
                 .gid(gid)
                 .fullShortUrl(fullShortUrl)
@@ -485,7 +516,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
         try {
             shortLinkStatisticMapper.shortLinkStatisticInsert(shortLinkStatistic);
-            generateLocationStatisticDO(fullShortUrl,gid, remoteAddr, now);
+            shortLinkLocationStatisticMapper.shortLinkLocaleState(locationStatisticDO);
             shortLinkOsStatisticMapper.shortLinkOsState(shortLinkOsStatisticDO);
             shortLinkBrowserStatisticMapper.shortLinkBrowserState(shortLinkBrowserStatisticDO);
             shortLinkDeviceStatisticMapper.shortLinkDeviceState(shortLinkDeviceStatisticDO);
@@ -499,34 +530,6 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         }
     }
 
-    /**
-     *
-     * 短链接地区信息统计
-     */
-    private void generateLocationStatisticDO(String fullShortUrl, String gid, String remoteAddr, Date now){
-        ShortLinkLocationStatisticDO locationStatisticDO;
-        // 向高德API发送请求获取IP相关的地区信息
-        Map<String, Object> mapRequestMap = new HashMap<>(2);
-        mapRequestMap.put("key", mapUserKey);
-        String mapApiResponse = HttpUtil.get("https://restapi.amap.com/v3/ip", mapRequestMap);
-        JSONObject jsonObject = JSON.parseObject(mapApiResponse);
-        String infoCode = jsonObject.getString("infocode");
-        if(StrUtil.isNotBlank(infoCode) &&  Objects.equals(infoCode,"10000")){
-            String province = jsonObject.getString("province");
-            boolean unKnownFlag = StrUtil.isBlank(province);
-            locationStatisticDO = ShortLinkLocationStatisticDO.builder()
-                    .gid(gid)
-                    .fullShortUrl(fullShortUrl)
-                    .date(now)
-                    .cnt(1)
-                    .country("中国")
-                    .province(unKnownFlag ? "未知" : province)
-                    .city(unKnownFlag ? "未知" : jsonObject.getString("city"))
-                    .adcode(unKnownFlag ? "未知" : jsonObject.getString("adcode"))
-                    .build();
-            shortLinkLocationStatisticMapper.shortLinkLocaleState(locationStatisticDO);
-        }
-    }
 
 
     /**

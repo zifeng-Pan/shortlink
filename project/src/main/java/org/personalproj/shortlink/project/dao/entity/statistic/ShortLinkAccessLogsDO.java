@@ -63,4 +63,21 @@ public class ShortLinkAccessLogsDO extends BaseDO {
      */
     private Date date;
 
+    /**
+     * 短链接网络
+     */
+    private String network;
+
+    /**
+     *
+     * 短链接设备
+     */
+    private String device;
+
+    /**
+     *
+     * 短链接位置
+     */
+    private String locale;
+
 }
