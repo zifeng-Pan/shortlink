@@ -46,5 +46,5 @@ public interface ShortLinkDeviceStatisticMapper extends BaseMapper<ShortLinkDevi
             "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
             "    gid, device;")
-    List<ShortLinkDeviceStatisticDO> listDeviceStatsByShortLinkGroup(ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
+    List<ShortLinkDeviceStatisticDO> listDeviceStatsByShortLinkGroup(@Param("param") ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
 }

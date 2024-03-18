@@ -58,5 +58,5 @@ public interface ShortLinkOsStatisticMapper extends BaseMapper<ShortLinkOsStatis
             "GROUP BY " +
             "    gid, os;"
     )
-    List<ShortLinkOsStatisticDO> listOsStatsByShortLinkGroup(ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
+    List<ShortLinkOsStatisticDO> listOsStatsByShortLinkGroup(@Param("param")ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
 }

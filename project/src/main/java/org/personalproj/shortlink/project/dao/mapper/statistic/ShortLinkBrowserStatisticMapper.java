@@ -54,5 +54,5 @@ public interface ShortLinkBrowserStatisticMapper extends BaseMapper<ShortLinkBro
             "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
             "    gid, browser;")
-    List<HashMap<String, Object>> listBrowserStatsByShortLinkGroup(ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
+    List<HashMap<String, Object>> listBrowserStatsByShortLinkGroup(@Param("param")ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
 }

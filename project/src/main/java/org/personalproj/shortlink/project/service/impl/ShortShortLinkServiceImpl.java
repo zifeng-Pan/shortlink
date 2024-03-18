@@ -436,6 +436,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                     .fullShortUrl(fullShortUrl)
                     .ip(remoteAddr)
                     .user(uv.get())
+                    .date(now)
                     .build();
         } catch (InterruptedException e) {
             e.printStackTrace();

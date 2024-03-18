@@ -109,7 +109,7 @@ public interface ShortLinkStatisticMapper extends BaseMapper<ShortLinkStatisticD
             "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
             "    gid, weekday;")
-    List<ShortLinkStatisticDO> listWeekdayStatsByShortLinkGroup(ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
+    List<ShortLinkStatisticDO> listWeekdayStatsByShortLinkGroup(@Param("param")ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
 
     /**
      * 根据短链接组获取指定日期内小时基础监控数据
@@ -124,5 +124,5 @@ public interface ShortLinkStatisticMapper extends BaseMapper<ShortLinkStatisticD
             "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
             "    gid, hour;")
-    List<ShortLinkStatisticDO> listHourStatsByShortLinkGroup(ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
+    List<ShortLinkStatisticDO> listHourStatsByShortLinkGroup(@Param("param")ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
 }
