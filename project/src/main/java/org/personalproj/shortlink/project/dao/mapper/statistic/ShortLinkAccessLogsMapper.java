@@ -10,6 +10,7 @@ import org.personalproj.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -75,6 +76,32 @@ public interface ShortLinkAccessLogsMapper extends BaseMapper<ShortLinkAccessLog
             "(select gid ,date from t_link_access_logs WHERE date <  #{param.startDate}) as t2" +
             " ON t1.gid = t2.gid;")
     HashMap<String, Object> userTypeCountByShortLinkGroup(@Param("param") ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
+
+    /**
+     *
+     * 查询短链接访问日志以及对应的访问记录中用户类型
+     */
+    @Select("<script> " +
+            "SELECT " +
+            "    user, " +
+            "    CASE " +
+            "        WHEN MIN(date) BETWEEN #{startDate} AND #{endDate} THEN '新访客' " +
+            "        ELSE '老访客' " +
+            "    END AS uvType " +
+            "FROM " +
+            "    t_link_access_logs " +
+            "WHERE " +
+            "    full_short_url = #{fullShortUrl} " +
+            "    AND gid = #{gid} " +
+            "    AND user IN " +
+            "    <foreach item='item' index='index' collection='userAccessLogsList' open='(' separator=',' close=')'> " +
+            "        #{item} " +
+            "    </foreach> " +
+            "GROUP BY " +
+            "    user;" +
+            "    </script>"
+    )
+    List<Map<String, Object>> selectUvTypeByUsers(@Param("startDate") String startDate, @Param("endDate") String endDate, @Param("fullShortUrl")String fullShortUrl, @Param("gid") String gid, @Param("userAccessLogsList") List<String> userAccessLogsList);
 
     /**
      * 根据短链接获取指定日期内高频访问IP数据
