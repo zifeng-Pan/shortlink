@@ -106,10 +106,6 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
     @Value("${short-link.statistic.location.user-key}")
     private String mapUserKey;
 
-    private final AtomicBoolean uvFirstFlag = new AtomicBoolean();
-
-    private final AtomicReference<String> uv = new AtomicReference<>();
-
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws InterruptedException, IOException {
         // 对路由表设置的是fullShortUrl（全局唯一）与gid之间的映射，不直接fullShortUrl映射shortUri的原因是需要到短链接表中看是否删除以及是否启用,同时还需要看是否过期
@@ -122,8 +118,8 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 shortLinkStatistic(fullShortUrl,null,httpServletRequest,httpServletResponse);
                 httpServletResponse.sendRedirect(originalLink);
                 return;
-            } catch (IOException e) {
-                throw new ClientException(String.format("短链接:{},跳转失败",fullShortUrl));
+            } catch (Exception e) {
+                throw new ClientException(String.format("短链接:{},跳转\\统计失败",fullShortUrl));
             }
         }
         // redis不存在full_short_url这个key的时候，解决缓存穿透[缓存中没有对应的缓存数据，如果是缓存失效的话，布隆过滤器中还是存在的]的问题
@@ -377,12 +373,14 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     private void shortLinkStatistic(String fullShortUrl, String gid, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse){
         Cookie[] cookies = httpServletRequest.getCookies();
+        AtomicBoolean uvFirstFlag = new AtomicBoolean();
+        AtomicReference<String> uv = new AtomicReference<>();
         FutureTask<AtomicBoolean> generateCookieTask = null;
         String browser = LinkUtil.getBrowser(httpServletRequest);
         String os = LinkUtil.getOperatingSystem(httpServletRequest);
         // 如果cookie是空的
         if(ArrayUtil.isEmpty(cookies)){
-            generateCookieTask = new FutureTask<>(new generateCookieToResponse(fullShortUrl, httpServletResponse), uvFirstFlag);
+            generateCookieTask = new FutureTask<>(new generateCookieToResponse(fullShortUrl, httpServletResponse, uv, uvFirstFlag), uvFirstFlag);
             Thread addCookieThread = new Thread(generateCookieTask);
             addCookieThread.start();
         } else {
@@ -393,12 +391,14 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                     .ifPresentOrElse( cookie -> {
                         Long uvAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATISTIC_COOKIE_UV + fullShortUrl, cookie);
                         if( uvAdd != null && uvAdd > 0L){
+                            uvFirstFlag.set(Boolean.TRUE);
+                            uv.set(cookie);
+                        } else {
                             uvFirstFlag.set(Boolean.FALSE);
                             uv.set(cookie);
                         }
-                        uvFirstFlag.set(uvAdd != null && uvAdd > 0L);
                     },
-                    new generateCookieToResponse(fullShortUrl, httpServletResponse));
+                    new generateCookieToResponse(fullShortUrl, httpServletResponse, uv, uvFirstFlag));
         }
         if(StrUtil.isBlank(gid)){
             LambdaQueryWrapper<ShortLinkRouteDO> shortLinkRouteLambdaQueryWrapper = Wrappers.lambdaQuery(ShortLinkRouteDO.class)
@@ -414,7 +414,9 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         boolean uipFirstFlag = (uipAdd != null && uipAdd > 0L);
 
         ShortLinkStatisticDO shortLinkStatistic;
+        ShortLinkAccessLogsDO shortLinkAccessLogsDO;
         try {
+            // 短链接基础访问记录生成
             shortLinkStatistic = ShortLinkStatisticDO.builder()
                     .fullShortUrl(fullShortUrl)
                     .gid(gid)
@@ -424,6 +426,16 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                     .uip(uipFirstFlag ? 1 : 0)
                     .hour(DateUtil.hour(now, true))
                     .weekday(weekDay)
+                    .build();
+
+            // 短链接访问日志记录生成
+            shortLinkAccessLogsDO = ShortLinkAccessLogsDO.builder()
+                    .browser(browser)
+                    .os(os)
+                    .gid(gid)
+                    .fullShortUrl(fullShortUrl)
+                    .ip(remoteAddr)
+                    .user(uv.get())
                     .build();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -450,15 +462,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 .fullShortUrl(fullShortUrl)
                 .date(now)
                 .build();
-        // 短链接访问日志记录
-        ShortLinkAccessLogsDO shortLinkAccessLogsDO = ShortLinkAccessLogsDO.builder()
-                .browser(browser)
-                .os(os)
-                .gid(gid)
-                .fullShortUrl(fullShortUrl)
-                .ip(remoteAddr)
-                .user(uv.get())
-                .build();
+
         // 短链接访问设备记录
         ShortLinkDeviceStatisticDO shortLinkDeviceStatisticDO = ShortLinkDeviceStatisticDO.builder()
                 .gid(gid)
@@ -503,8 +507,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         // 向高德API发送请求获取IP相关的地区信息
         Map<String, Object> mapRequestMap = new HashMap<>(2);
         mapRequestMap.put("key", mapUserKey);
-        mapRequestMap.put("ip",remoteAddr);
-        String mapApiResponse = HttpUtil.get("https://restapi.amap.com/v3", mapRequestMap);
+        String mapApiResponse = HttpUtil.get("https://restapi.amap.com/v3/ip", mapRequestMap);
         JSONObject jsonObject = JSON.parseObject(mapApiResponse);
         String infoCode = jsonObject.getString("infocode");
         if(StrUtil.isNotBlank(infoCode) &&  Objects.equals(infoCode,"10000")){
@@ -536,6 +539,10 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         private String fullShortUrl;
 
         private HttpServletResponse response;
+
+        private AtomicReference<String> uv;
+
+        private AtomicBoolean uvFirstFlag;
 
         @Override
         public void run() {

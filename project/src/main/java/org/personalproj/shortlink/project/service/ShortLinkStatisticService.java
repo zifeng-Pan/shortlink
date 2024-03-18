@@ -12,7 +12,7 @@ public interface ShortLinkStatisticService extends IService<ShortLinkStatisticDO
      *
      * 根据请求的短链接以及起止时间返回短链接的统计监控数据
      */
-    ShortLinkStatsRespDTO singeShortLinkStatistic(ShortLinkStatsReqDTO shortLinkStatsReqDTO);
+    ShortLinkStatsRespDTO singleShortLinkStatistic(ShortLinkStatsReqDTO shortLinkStatsReqDTO);
 
     /**
      * 获取分组内所有的短链接监控数据

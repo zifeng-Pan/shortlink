@@ -37,7 +37,7 @@ public interface ShortLinkNetWorkStatisticMapper extends BaseMapper<ShortLinkNet
             "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
             "    full_short_url, gid, network;")
-    List<ShortLinkNetWorkStatisticDO> listNetworkStatsByShortLink(ShortLinkStatsReqDTO shortLinkStatsReqDTO);
+    List<ShortLinkNetWorkStatisticDO> listNetworkStatsByShortLink(@Param("param") ShortLinkStatsReqDTO shortLinkStatsReqDTO);
 
     /**
      * 根据短链接组获取指定日期内访问网络监控数据
@@ -52,5 +52,5 @@ public interface ShortLinkNetWorkStatisticMapper extends BaseMapper<ShortLinkNet
             "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
             "    gid, network;")
-    List<ShortLinkNetWorkStatisticDO> listNetworkStatsByShortLinkGroup(ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
+    List<ShortLinkNetWorkStatisticDO> listNetworkStatsByShortLinkGroup(@Param("param") ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
 }

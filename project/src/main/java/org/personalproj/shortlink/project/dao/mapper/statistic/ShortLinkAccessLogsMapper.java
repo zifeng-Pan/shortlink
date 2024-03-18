@@ -29,7 +29,7 @@ public interface ShortLinkAccessLogsMapper extends BaseMapper<ShortLinkAccessLog
             "WHERE " +
             "    full_short_url = #{param.fullShortUrl} " +
             "    AND gid = #{param.gid} " +
-            "    AND create_time BETWEEN #{param.startDate} and #{param.endDate} " +
+            "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
             "    full_short_url, gid;")
     ShortLinkStatisticDO calUvPvUipByShortLink(@Param("param")ShortLinkStatsReqDTO shortLinkStatsReqDTO);
@@ -45,7 +45,7 @@ public interface ShortLinkAccessLogsMapper extends BaseMapper<ShortLinkAccessLog
             "    t_link_access_logs " +
             "WHERE " +
             "    gid = #{param.gid} " +
-            "    AND create_time BETWEEN #{param.startDate} and #{param.endDate} " +
+            "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
             "    gid;")
     ShortLinkStatisticDO calUvPvUipByShortLinkGroup(@Param("param") ShortLinkGroupStatsReqDTO ShortLinkGroupStatsReqDTO);
@@ -55,26 +55,26 @@ public interface ShortLinkAccessLogsMapper extends BaseMapper<ShortLinkAccessLog
      */
     @Select("SELECT " +
             "COUNT(DISTINCT case when t2.`user` is NOT NULL THEN t2.`user` END) as oldUserCount," +
-            "COUNT(DISTINCT case when t2.`user` is null THEN t1.`user` END) as newUserCount" +
-            "FROM" +
-            "(SELECT user, min(create_time) as now_first_access_time from t_link_access_logs WHERE create_time >= #{param.startDate} And create_time <= #{param.endDate} GROUP BY user)  as t1" +
-            "left JOIN" +
-            "(select user ,create_time from t_link_access_logs WHERE create_time <  '2024-03-01') as t2" +
-            "ON t1.user = t2.user;")
+            "COUNT(DISTINCT case when t2.`user` is null THEN t1.`user` END) as newUserCount " +
+            " FROM " +
+            " (SELECT user, min(date) as now_first_access_time from t_link_access_logs WHERE date >= #{param.startDate} And date <= #{param.endDate} GROUP BY user)  as t1" +
+            " LEFT JOIN " +
+            "(select user ,date from t_link_access_logs WHERE date <  #{param.startDate}) as t2" +
+            " ON t1.user = t2.user;")
     HashMap<String, Object> userTypeCountByShortLink(@Param("param") ShortLinkStatsReqDTO shortLinkStatsReqDTO);
 
     /**
      * 查询时间范围内访问所有短链接组中的短链接的用户类型
      */
     @Select("SELECT " +
-            "COUNT(DISTINCT case when t2.`gid` is NOT NULL THEN t2.`gid` END) as oldUserCount," +
-            "COUNT(DISTINCT case when t2.`gid` is null THEN t1.`gid` END) as newUserCount" +
-            "FROM" +
-            "(SELECT gid, min(create_time) as now_first_access_time from t_link_access_logs WHERE create_time >= #{param.startDate} And create_time <= #{param.endDate} GROUP BY gid)  as t1" +
-            "left JOIN" +
-            "(select gid ,create_time from t_link_access_logs WHERE create_time <  '2024-03-01') as t2" +
-            "ON t1.gid = t2.gid;")
-    HashMap<String, Object> userTypeCountByShortLinkGroup(ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
+            "COUNT(DISTINCT case when t2.`gid` is NOT NULL THEN t2.`gid` END) as oldUserCount, " +
+            "COUNT(DISTINCT case when t2.`gid` is null THEN t1.`gid` END) as newUserCount " +
+            " FROM " +
+            "(SELECT gid, min(date) as now_first_access_time from t_link_access_logs WHERE date >= #{param.startDate} And date <= #{param.endDate} GROUP BY gid)  as t1" +
+            " left JOIN " +
+            "(select gid ,date from t_link_access_logs WHERE date <  #{param.startDate}) as t2" +
+            " ON t1.gid = t2.gid;")
+    HashMap<String, Object> userTypeCountByShortLinkGroup(@Param("param") ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
 
     /**
      * 根据短链接获取指定日期内高频访问IP数据
@@ -87,7 +87,7 @@ public interface ShortLinkAccessLogsMapper extends BaseMapper<ShortLinkAccessLog
             "WHERE " +
             "    full_short_url = #{param.fullShortUrl} " +
             "    AND gid = #{param.gid} " +
-            "    AND create_time BETWEEN #{param.startDate} and #{param.endDate} " +
+            "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
             "    full_short_url, gid, ip " +
             "ORDER BY " +
@@ -105,11 +105,11 @@ public interface ShortLinkAccessLogsMapper extends BaseMapper<ShortLinkAccessLog
             "    t_link_access_logs " +
             "WHERE " +
             "    gid = #{param.gid} " +
-            "    AND create_time BETWEEN #{param.startDate} and #{param.endDate} " +
+            "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
             "    gid, ip " +
             "ORDER BY " +
             "    count DESC " +
             "LIMIT 5;")
-    List<HashMap<String, Object>> listTopIpByShortLinkGroup(ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
+    List<HashMap<String, Object>> listTopIpByShortLinkGroup(@Param("param") ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
 }

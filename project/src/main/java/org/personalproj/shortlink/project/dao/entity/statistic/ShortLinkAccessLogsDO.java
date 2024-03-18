@@ -9,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.personalproj.shortlink.common.database.BaseDO;
 
+import java.util.Date;
+
 /**
  * @BelongsProject: shortlink
  * @BelongsPackage: org.personalproj.shortlink.project.dao.entity.statistic
@@ -55,5 +57,10 @@ public class ShortLinkAccessLogsDO extends BaseDO {
      * ip
      */
     private String ip;
+
+    /**
+     * 日期
+     */
+    private Date date;
 
 }

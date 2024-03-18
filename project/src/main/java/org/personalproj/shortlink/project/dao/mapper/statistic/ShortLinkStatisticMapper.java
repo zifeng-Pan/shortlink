@@ -20,10 +20,11 @@ public interface ShortLinkStatisticMapper extends BaseMapper<ShortLinkStatisticD
      *
      * 记录基础访问监控数据
      */
-    @Insert("INSERT INTO t_link_statistic ( full_short_url, gid, date, pv, uv, uip, HOUR, weekday, create_time, update_time, del_flag )" +
-            "VALUES(#{shortLinkStatistic.fullShortUrl}, #{shortLinkStatistic.gid}, #{shortLinkStatistic.gid}, #{shortLinkStatistic.date}, #{shortLinkStatistic.pv}, #{shortLinkStatistic.uv}, #{shortLinkStatistic.uip}, #{shortLinkStatistic.hour}, #{shortLinkStatistic.weekday}, NOW(), NOW(), 0)" +
-            "ON DUPLICATE KEY UPDATE pv = pv + #{shortLinkStatistic.pv}, uv = uv + #{shortLinkStatistic.uv}, uip = uip + #{shortLinkStatistic.uip};")
-    void shortLinkStatisticInsert(@Param("shortLinkStatistic") ShortLinkStatisticDO shortLinkStatisticDO);
+    @Insert("INSERT INTO t_link_statistic (full_short_url, gid, date, pv, uv, uip, hour, weekday, create_time, update_time, del_flag) " +
+            "VALUES( #{linkAccessStats.fullShortUrl}, #{linkAccessStats.gid}, #{linkAccessStats.date}, #{linkAccessStats.pv}, #{linkAccessStats.uv}, #{linkAccessStats.uip}, #{linkAccessStats.hour}, #{linkAccessStats.weekday}, NOW(), NOW(), 0) ON DUPLICATE KEY UPDATE pv = pv +  #{linkAccessStats.pv}, " +
+            "uv = uv + #{linkAccessStats.uv}, " +
+            " uip = uip + #{linkAccessStats.uip};")
+    void shortLinkStatisticInsert(@Param("linkAccessStats") ShortLinkStatisticDO shortLinkStatisticDO);
 
     /**
      *
@@ -69,7 +70,7 @@ public interface ShortLinkStatisticMapper extends BaseMapper<ShortLinkStatisticD
             "    weekday, " +
             "    SUM(pv) AS pv " +
             "FROM " +
-            "    t_link_access_stats " +
+            "    t_link_statistic " +
             "WHERE " +
             "    full_short_url = #{param.fullShortUrl} " +
             "    AND gid = #{param.gid} " +
@@ -85,7 +86,7 @@ public interface ShortLinkStatisticMapper extends BaseMapper<ShortLinkStatisticD
             "    hour, " +
             "    SUM(pv) AS pv " +
             "FROM " +
-            "    t_link_access_stats " +
+            "    t_link_statistic " +
             "WHERE " +
             "    full_short_url = #{param.fullShortUrl} " +
             "    AND gid = #{param.gid} " +
@@ -99,15 +100,15 @@ public interface ShortLinkStatisticMapper extends BaseMapper<ShortLinkStatisticD
      * 根据短链接组获取指定日期内小时基础监控数据
      */
     @Select("SELECT " +
-            "    hour, " +
+            "    weekday, " +
             "    SUM(pv) AS pv " +
             "FROM " +
-            "    t_link_access_stats " +
+            "    t_link_statistic " +
             "WHERE " +
             "    gid = #{param.gid} " +
             "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +
             "GROUP BY " +
-            "    gid, hour;")
+            "    gid, weekday;")
     List<ShortLinkStatisticDO> listWeekdayStatsByShortLinkGroup(ShortLinkGroupStatsReqDTO shortLinkGroupStatsReqDTO);
 
     /**
@@ -117,7 +118,7 @@ public interface ShortLinkStatisticMapper extends BaseMapper<ShortLinkStatisticD
             "    hour, " +
             "    SUM(pv) AS pv " +
             "FROM " +
-            "    t_link_access_stats " +
+            "    t_link_statistic " +
             "WHERE " +
             "    gid = #{param.gid} " +
             "    AND date BETWEEN #{param.startDate} and #{param.endDate} " +

@@ -3,8 +3,10 @@ package org.personalproj.shortlink.project.dao.entity.statistic;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.personalproj.shortlink.common.database.BaseDO;
 
 import java.util.Date;
@@ -20,11 +22,10 @@ import java.util.Date;
 @Data
 @Builder
 @TableName("t_link_statistic")
+@NoArgsConstructor
+@AllArgsConstructor
 public class ShortLinkStatisticDO extends BaseDO {
     @TableId(type = IdType.AUTO)
-    /**
-     * id
-     */
     private Long id;
 
     /**

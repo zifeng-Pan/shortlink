@@ -33,8 +33,9 @@ public class ShortLinkController {
     private final ShortLinkService shortLinkService;
 
     @RequestMapping("/{short-uri}")
-    public void restoreUrl(@PathVariable("short-uri") String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, InterruptedException {
+    public Result<Void> restoreUrl(@PathVariable("short-uri") String shortUri, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, InterruptedException {
         shortLinkService.restoreUrl(shortUri, httpServletRequest, httpServletResponse);
+        return Results.success();
     }
 
     @PostMapping("/api/shortlink/project/v1/core/create")

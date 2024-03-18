@@ -42,14 +42,8 @@ public class ShortLinkStatisticServiceImpl extends ServiceImpl<ShortLinkStatisti
 
     private final ShortLinkNetWorkStatisticMapper shortLinkNetWorkStatisticMapper;
 
-    /*
-    private <R,T> R reflectMapperMethodInvoke(BaseMapper<T> baseMapper, Class<R> returnClass, String methodType,  T requestParams, Class<T> paramClass){
-        return null;
-    }
-     */
-
     @Override
-    public ShortLinkStatsRespDTO singeShortLinkStatistic(ShortLinkStatsReqDTO shortLinkStatsReqDTO) {
+    public ShortLinkStatsRespDTO singleShortLinkStatistic(ShortLinkStatsReqDTO shortLinkStatsReqDTO) {
         // 1.根据起止日期查询出这段时间的基础统计数据，构建每日短链接基础访问统计实体，同时汇总的uv，pv,uip
         // 1.1 查询出基础统计表中当前短链接每一天的uv，uip，pv总数
         List<ShortLinkStatisticDO> shortLinkBaseDailyStatisticList = baseMapper.listShortLinkBaseStatistic(shortLinkStatsReqDTO);

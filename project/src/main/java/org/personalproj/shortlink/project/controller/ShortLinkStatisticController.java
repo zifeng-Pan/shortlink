@@ -22,17 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/short-link/v1")
+@RequestMapping("/api/short-link/v1/stats")
 public class ShortLinkStatisticController {
 
     private final ShortLinkStatisticService shortLinkStatisticService;
 
-    @GetMapping("/stats")
+    @GetMapping("/single")
     public Result<ShortLinkStatsRespDTO> shortLinkStats(@RequestBody ShortLinkStatsReqDTO shortLinkStatsReqDTO){
-        return Results.success(shortLinkStatisticService.singeShortLinkStatistic(shortLinkStatsReqDTO));
+        return Results.success(shortLinkStatisticService.singleShortLinkStatistic(shortLinkStatsReqDTO));
     }
 
-    @GetMapping("/stats/group")
+    @GetMapping("/group")
     public Result<ShortLinkStatsRespDTO> shortLinkGroupStats(@RequestBody ShortLinkGroupStatsReqDTO ShortLinkGroupStatsReqDTO){
         return Results.success(shortLinkStatisticService.groupShortLinkStats(ShortLinkGroupStatsReqDTO));
     }
