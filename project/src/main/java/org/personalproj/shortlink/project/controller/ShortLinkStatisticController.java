@@ -5,8 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.common.convention.result.Result;
 import org.personalproj.shortlink.common.convention.result.Results;
 import org.personalproj.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkStatsAccessRecordGroupReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkStatsReqDTO;
+import org.personalproj.shortlink.project.dto.resp.stats.ShortLinkStatsAccessRecordGroupRespDTO;
 import org.personalproj.shortlink.project.dto.resp.stats.ShortLinkStatsAccessRecordRespDTO;
 import org.personalproj.shortlink.project.dto.resp.stats.ShortLinkStatsRespDTO;
 import org.personalproj.shortlink.project.service.ShortLinkStatisticService;
@@ -32,7 +34,7 @@ public class ShortLinkStatisticController {
 
     /**
      *
-     * 单个短链接指定时间内统计指标
+     * 单个短链接指定时间内统计指标【指标数据】
      */
     @PostMapping("/single")
     public Result<ShortLinkStatsRespDTO> shortLinkStats(@RequestBody ShortLinkStatsReqDTO shortLinkStatsReqDTO){
@@ -41,7 +43,7 @@ public class ShortLinkStatisticController {
 
     /**
      *
-     * 短链接组指定时间内指标统计数据
+     * 短链接组指定时间内指标统计数据【指标数据】
      */
     @PostMapping("/group")
     public Result<ShortLinkStatsRespDTO> shortLinkGroupStats(@RequestBody ShortLinkGroupStatsReqDTO ShortLinkGroupStatsReqDTO){
@@ -50,11 +52,20 @@ public class ShortLinkStatisticController {
 
     /**
      *
-     * 单个短链接指定时间内访问记录监控数据
+     * 单个短链接指定时间内访问记录监控数据【log数据】
      */
     @PostMapping("/access-record")
     public Result<IPage<ShortLinkStatsAccessRecordRespDTO>> shortLinkAccessRecordStats(@RequestBody ShortLinkStatsAccessRecordReqDTO shortLinkStatsAccessRecordReqDTO){
         return Results.success(shortLinkStatisticService.shortLinkStatsAccessRecord(shortLinkStatsAccessRecordReqDTO));
+    }
+
+    /**
+     *
+     * 短链接组指定时间内访问记录监控数据【log数据】
+     */
+    @PostMapping("/access-record/group")
+    public Result<IPage<ShortLinkStatsAccessRecordGroupRespDTO>> shortLinkAccessRecordGroupStats(@RequestBody ShortLinkStatsAccessRecordGroupReqDTO shortLinkStatsAccessRecordGroupReqDTO){
+        return Results.success(shortLinkStatisticService.shortLinkStatsAccessRecordGroup(shortLinkStatsAccessRecordGroupReqDTO));
     }
 
 }

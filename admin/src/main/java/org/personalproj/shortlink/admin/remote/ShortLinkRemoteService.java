@@ -10,6 +10,7 @@ import org.personalproj.shortlink.admin.remote.dto.req.*;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
+import org.personalproj.shortlink.admin.remote.dto.resp.stats.ShortLinkStatsAccessRecordGroupRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.stats.ShortLinkStatsAccessRecordRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.stats.ShortLinkStatsRespDTO;
 import org.personalproj.shortlink.common.convention.result.Result;
@@ -110,6 +111,11 @@ public interface ShortLinkRemoteService {
 
     default Result<IPage<ShortLinkStatsAccessRecordRespDTO>> shortLinkStatsAccessRecord(ShortLinkStatsAccessRecordReqDTO shortLinkStatsAccessRecordReqDTO){
         HttpRequest httpRequest = HttpUtil.createPost("http://127.0.0.1:8001/api/short-link/v1/stats/access-record").body(JSON.toJSONString(shortLinkStatsAccessRecordReqDTO));
+        return JSON.parseObject(httpRequest.execute().body(),Result.class);
+    };
+
+    default Result<IPage<ShortLinkStatsAccessRecordGroupRespDTO>> shortLinkStatsAccessRecordGroup(ShortLinkStatsAccessRecordGroupReqDTO shortLinkStatsAccessRecordGroupReqDTO){
+        HttpRequest httpRequest = HttpUtil.createPost("http://127.0.0.1:8001/api/short-link/v1/stats/access-record/group").body(JSON.toJSONString(shortLinkStatsAccessRecordGroupReqDTO));
         return JSON.parseObject(httpRequest.execute().body(),Result.class);
     };
 }

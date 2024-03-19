@@ -104,6 +104,31 @@ public interface ShortLinkAccessLogsMapper extends BaseMapper<ShortLinkAccessLog
     List<Map<String, Object>> selectUvTypeByUsers(@Param("startDate") String startDate, @Param("endDate") String endDate, @Param("fullShortUrl")String fullShortUrl, @Param("gid") String gid, @Param("userAccessLogsList") List<String> userAccessLogsList);
 
     /**
+     *
+     * 查询短链接分组访问日志以及对应的访问记录中用户类型
+     */
+    @Select("<script> " +
+            "SELECT " +
+            "    user, " +
+            "    CASE " +
+            "        WHEN MIN(date) BETWEEN #{startDate} AND #{endDate} THEN '新访客' " +
+            "        ELSE '老访客' " +
+            "    END AS uvType " +
+            "FROM " +
+            "    t_link_access_logs " +
+            "WHERE " +
+            "    gid = #{gid} " +
+            "    AND user IN " +
+            "    <foreach item='item' index='index' collection='userAccessLogsList' open='(' separator=',' close=')'> " +
+            "        #{item} " +
+            "    </foreach> " +
+            "GROUP BY " +
+            "    user;" +
+            "    </script>"
+    )
+    List<Map<String, Object>> selectGroupUvTypeByUsers(@Param("startDate") String startDate, @Param("endDate") String endDate, @Param("gid") String gid, @Param("userAccessLogsList") List<String> userAccessLogsList);
+
+    /**
      * 根据短链接获取指定日期内高频访问IP数据
      */
     @Select("SELECT " +

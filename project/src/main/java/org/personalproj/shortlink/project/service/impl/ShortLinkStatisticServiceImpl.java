@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.project.dao.entity.statistic.*;
 import org.personalproj.shortlink.project.dao.mapper.statistic.*;
 import org.personalproj.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
+import org.personalproj.shortlink.project.dto.req.ShortLinkStatsAccessRecordGroupReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import org.personalproj.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 import org.personalproj.shortlink.project.dto.resp.stats.*;
@@ -463,5 +464,35 @@ public class ShortLinkStatisticServiceImpl extends ServiceImpl<ShortLinkStatisti
             each.setUserType(uvType);
         });
         return shortLinkAccessLogRecords;
+    }
+
+    @Override
+    public IPage<ShortLinkStatsAccessRecordGroupRespDTO> shortLinkStatsAccessRecordGroup(ShortLinkStatsAccessRecordGroupReqDTO shortLinkStatsAccessRecordGroupReqDTO) {
+        LambdaQueryWrapper<ShortLinkAccessLogsDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkAccessLogsDO.class)
+                .eq(ShortLinkAccessLogsDO::getGid, shortLinkStatsAccessRecordGroupReqDTO.getGid())
+                .eq(ShortLinkAccessLogsDO::getDelFlag, 0)
+                .between(ShortLinkAccessLogsDO::getCreateTime, shortLinkStatsAccessRecordGroupReqDTO.getStartDate(), shortLinkStatsAccessRecordGroupReqDTO.getEndDate())
+                .orderByDesc(ShortLinkAccessLogsDO::getCreateTime);
+        IPage<ShortLinkAccessLogsDO> shortLinkGroupAccessLogs = shortLinkAccessLogsMapper.selectPage(shortLinkStatsAccessRecordGroupReqDTO, queryWrapper);
+        IPage<ShortLinkStatsAccessRecordGroupRespDTO> shortLinkGroupAccessLogRecords = shortLinkGroupAccessLogs.convert(item -> BeanUtil.toBean(item, ShortLinkStatsAccessRecordGroupRespDTO.class));
+        List<String> userAccessLogsList = shortLinkGroupAccessLogRecords.getRecords().stream()
+                .map(ShortLinkStatsAccessRecordGroupRespDTO::getUser)
+                .toList();
+        List<Map<String, Object>> uvTypeList = shortLinkAccessLogsMapper.selectGroupUvTypeByUsers(
+                shortLinkStatsAccessRecordGroupReqDTO.getStartDate(),
+                shortLinkStatsAccessRecordGroupReqDTO.getEndDate(),
+                shortLinkStatsAccessRecordGroupReqDTO.getGid(),
+                userAccessLogsList
+        );
+        shortLinkGroupAccessLogRecords.getRecords().forEach(each -> {
+            String uvType = uvTypeList.stream()
+                    .filter(item -> Objects.equals(each.getUser(), item.get("user")))
+                    .findFirst()
+                    .map(item -> item.get("uvType"))
+                    .map(Object::toString)
+                    .orElse("旧访客");
+            each.setUserType(uvType);
+        });
+        return shortLinkGroupAccessLogRecords;
     }
 }

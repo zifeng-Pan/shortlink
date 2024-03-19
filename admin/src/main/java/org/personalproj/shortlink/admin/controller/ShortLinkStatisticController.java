@@ -4,11 +4,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.personalproj.shortlink.admin.remote.ShortLinkRemoteService;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkGroupStatsReqDTO;
+import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkStatsAccessRecordGroupReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import org.personalproj.shortlink.admin.remote.dto.req.ShortLinkStatsReqDTO;
+import org.personalproj.shortlink.admin.remote.dto.resp.stats.ShortLinkStatsAccessRecordGroupRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.stats.ShortLinkStatsAccessRecordRespDTO;
 import org.personalproj.shortlink.admin.remote.dto.resp.stats.ShortLinkStatsRespDTO;
 import org.personalproj.shortlink.common.convention.result.Result;
+import org.personalproj.shortlink.common.convention.result.Results;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,6 +45,15 @@ public class ShortLinkStatisticController {
     @PostMapping("/access-record")
     public Result<IPage<ShortLinkStatsAccessRecordRespDTO>> shortLinkGroupStats(@RequestBody ShortLinkStatsAccessRecordReqDTO shortLinkStatsAccessRecordReqDTO){
         return shortLinkRemoteService.shortLinkStatsAccessRecord(shortLinkStatsAccessRecordReqDTO);
+    }
+
+    /**
+     *
+     * 短链接组指定时间内访问记录监控数据【log数据】
+     */
+    @PostMapping("/access-record/group")
+    public Result<IPage<ShortLinkStatsAccessRecordGroupRespDTO>> shortLinkAccessRecordGroupStats(@RequestBody ShortLinkStatsAccessRecordGroupReqDTO shortLinkStatsAccessRecordGroupReqDTO){
+        return shortLinkRemoteService.shortLinkStatsAccessRecordGroup(shortLinkStatsAccessRecordGroupReqDTO);
     }
 
 }
