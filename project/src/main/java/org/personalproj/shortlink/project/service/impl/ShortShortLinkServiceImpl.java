@@ -103,6 +103,8 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     private final ShortLinkNetWorkStatisticMapper shortLinkNetWorkStatisticMapper;
 
+    private final ShortLinkTodayStatisticMapper shortLinkTodayStatisticMapper;
+
     @Value("${short-link.statistic.location.user-key}")
     private String mapUserKey;
 
@@ -212,6 +214,9 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
         shortLink.setShortUri(shortLinkSuffix);
         shortLink.setEnableStatus(0);
         shortLink.setFavicon(getFavicon(shortLinkCreateReqDTO.getOriginUrl()));
+        shortLink.setTotalPv(0);
+        shortLink.setTotalUv(0);
+        shortLink.setTotalUip(0);
 
         ShortLinkRouteDO shortLinkRouteDO = ShortLinkRouteDO.builder()
                 .gid(shortLink.getGid())
@@ -268,12 +273,12 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
     @Override
     public IPage<ShortLinkPageRespDTO> pageQuery(ShortLinkPageReqDTO shortLinkPageReqDTO) {
-        LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
-                .eq(ShortLinkDO::getGid, shortLinkPageReqDTO.getGid())
-                .eq(ShortLinkDO::getDelFlag, 0)
-                .orderByDesc(ShortLinkDO::getCreateTime);
-        IPage<ShortLinkDO> resultPage =  baseMapper.selectPage(shortLinkPageReqDTO, queryWrapper);
-        return resultPage.convert(row -> BeanUtil.toBean(row, ShortLinkPageRespDTO.class));
+        IPage<ShortLinkDO> shortLinkDOIPage = baseMapper.pageLink(shortLinkPageReqDTO);
+        return shortLinkDOIPage.convert(row -> {
+            ShortLinkPageRespDTO result = BeanUtil.toBean(row, ShortLinkPageRespDTO.class);
+            result.setDomain("http://" + result.getDomain());
+            return result;
+        });
     }
 
     @Override
@@ -406,7 +411,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
             ShortLinkRouteDO shortLinkRouteDO = shortLinkRouteMapper.selectOne(shortLinkRouteLambdaQueryWrapper);
             gid = shortLinkRouteDO.getGid();
         }
-        Date now = new Date();
+        Date now = new java.sql.Date(System.currentTimeMillis());
         int weekDay = DateUtil.dayOfWeekEnum(now).getIso8601Value();
         // uip 标记设置
         String remoteAddr = LinkUtil.getActualIp(httpServletRequest);
@@ -415,6 +420,7 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
 
         ShortLinkStatisticDO shortLinkStatistic;
         ShortLinkAccessLogsDO shortLinkAccessLogsDO;
+        ShortLinkTodayStatisticDO todayStatisticDO;
         ShortLinkLocationStatisticDO locationStatisticDO = null;
 
         String network = LinkUtil.getNetwork(httpServletRequest);
@@ -469,6 +475,16 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                     .locale(StrUtil.join("-","中国", locationStatisticDO.getProvince(), locationStatisticDO.getCity()))
                     .date(now)
                     .build();
+
+            // 今日短链接访问记录
+            todayStatisticDO = ShortLinkTodayStatisticDO.builder()
+                    .fullShortUrl(fullShortUrl)
+                    .gid(gid)
+                    .date(now)
+                    .todayPv(1)
+                    .todayUip(uipFirstFlag ? 1 : 0)
+                    .todayUv((generateCookieTask == null ? uvFirstFlag.get() : generateCookieTask.get().get()) ? 1 : 0)
+                    .build();
         } catch (InterruptedException e) {
             e.printStackTrace();
             throw new ServerException("异步生成cookie任务被打断:" + e.getMessage());
@@ -511,10 +527,13 @@ public class ShortShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, Shor
                 .fullShortUrl(fullShortUrl)
                 .date(now)
                 .build();
+
         DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
         transactionDefinition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         TransactionStatus transactionStatus = transactionManager.getTransaction(transactionDefinition);
         try {
+            baseMapper.incrementStats(gid, fullShortUrl, 1, (generateCookieTask == null ? uvFirstFlag.get() : generateCookieTask.get().get()) ? 1 : 0, uipFirstFlag ? 1 : 0);
+            shortLinkTodayStatisticMapper.shortLinkTodayState(todayStatisticDO);
             shortLinkStatisticMapper.shortLinkStatisticInsert(shortLinkStatistic);
             shortLinkLocationStatisticMapper.shortLinkLocaleState(locationStatisticDO);
             shortLinkOsStatisticMapper.shortLinkOsState(shortLinkOsStatisticDO);

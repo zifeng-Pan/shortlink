@@ -28,9 +28,6 @@ import java.util.Date;
 @Builder
 @Data
 public class ShortLinkDO extends BaseDO implements Serializable{
-    /**
-     *
-     */
     @TableId(type = IdType.AUTO)
     private Long id;
 
@@ -88,6 +85,42 @@ public class ShortLinkDO extends BaseDO implements Serializable{
      * 短链接相关描述
      */
     private String description;
+
+    /**
+     *
+     * 总的UV数
+     */
+    private Integer totalUv;
+
+    /**
+     *
+     * 总的PV数
+     */
+    private Integer totalPv;
+
+    /**
+     *
+     * 总的Uip数
+     */
+    private Integer totalUip;
+
+    /**
+     * 今日PV
+     */
+    @TableField(exist = false)
+    private Integer todayPv;
+
+    /**
+     * 今日UV
+     */
+    @TableField(exist = false)
+    private Integer todayUv;
+
+    /**
+     * 今日UIP
+     */
+    @TableField(exist = false)
+    private Integer todayUip;
 
     /**
      *

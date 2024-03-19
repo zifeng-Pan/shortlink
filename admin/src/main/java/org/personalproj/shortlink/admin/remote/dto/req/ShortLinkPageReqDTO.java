@@ -17,4 +17,10 @@ public class ShortLinkPageReqDTO extends Page {
      * 所属短链接组的gid
      */
     private String gid;
+
+    /**
+     *
+     * 排序标识
+     */
+    private String orderTag;
 }

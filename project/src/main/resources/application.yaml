@@ -28,3 +28,5 @@ short-link:
     location:
       user-key:
         435a1b631a2584625a577ebfcdb2ccca
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
